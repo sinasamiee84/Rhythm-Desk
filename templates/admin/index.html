@@ -1,0 +1,203 @@
+{% extends "admin/base.html" %}
+
+{% block content %}
+<div class="rhythm-dashboard" dir="rtl">
+    <div class="rhythm-heading">
+        <div>
+            <span class="rhythm-eyebrow">RhythmDesk · پنل مدیریت</span>
+            <h1>داشبورد سلامت قلب</h1>
+            <p>نمایی از بیماران و رکوردهای ECG در دسترس شما</p>
+        </div>
+        <a class="rhythm-button" href="{% url 'admin:patients_patient_add' %}">
+            + ثبت بیمار
+        </a>
+    </div>
+
+    <div class="rhythm-grid">
+        <a class="rhythm-card" href="{% url 'admin:patients_patient_changelist' %}">
+            <span>بیماران</span>
+            <strong>{{ stats.patients }}</strong>
+            <small>پروندهٔ ثبت‌شده</small>
+        </a>
+
+        <a class="rhythm-card" href="{% url 'admin:patients_ecgrecord_changelist' %}">
+            <span>رکوردهای ECG</span>
+            <strong>{{ stats.records }}</strong>
+            <small>تمام جلسات ثبت‌شده</small>
+        </a>
+
+        <div class="rhythm-card">
+            <span>پردازش‌شده</span>
+            <strong>{{ stats.processed }}</strong>
+            <small>دارای نتیجهٔ تحلیل</small>
+        </div>
+
+        <div class="rhythm-card">
+            <span>در انتظار پردازش</span>
+            <strong>{{ stats.pending }}</strong>
+            <small>بدون نتیجهٔ تحلیل</small>
+        </div>
+    </div>
+
+    <div class="rhythm-panel">
+        <h2>وضعیت نتایج</h2>
+        <div class="rhythm-statuses">
+            <div><i class="rhythm-dot rhythm-dot--normal"></i> طبیعی <b>{{ stats.normal }}</b></div>
+            <div><i class="rhythm-dot rhythm-dot--alert"></i> آریتمی <b>{{ stats.arrhythmia }}</b></div>
+            <div><i class="rhythm-dot rhythm-dot--noise"></i> نویز <b>{{ stats.noise }}</b></div>
+        </div>
+    </div>
+
+    <div class="rhythm-panel">
+        <div class="rhythm-panel-heading">
+            <h2>آخرین رکوردها</h2>
+            <a href="{% url 'admin:patients_ecgrecord_changelist' %}">نمایش همه</a>
+        </div>
+
+        {% if recent_records %}
+            <div class="rhythm-table-wrap">
+                <table class="rhythm-table">
+                    <thead>
+                        <tr>
+                            <th>بیمار</th>
+                            <th>وضعیت</th>
+                            <th>ضربان قلب</th>
+                            <th>تاریخ ثبت</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for record in recent_records %}
+                            <tr>
+                                <td>
+                                    <a href="{% url 'admin:patients_ecgrecord_change' record.pk %}">
+                                        {{ record.patient }}
+                                    </a>
+                                </td>
+                                <td>{{ record.get_signal_status_display }}</td>
+                                <td>{{ record.bpm|default:"—" }}</td>
+                                <td>{{ record.created_at|date:"Y/m/d H:i" }}</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <p class="rhythm-empty">هنوز رکوردی ثبت نشده است.</p>
+        {% endif %}
+    </div>
+</div>
+
+<style>
+    .rhythm-dashboard {
+        direction: rtl;
+        text-align: right;
+        color: #e8f5f2;
+    }
+    .rhythm-heading,
+    .rhythm-panel-heading {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+    }
+    .rhythm-heading { margin-bottom: 24px; }
+    .rhythm-heading h1 {
+        margin: 5px 0;
+        font-size: clamp(1.5rem, 3vw, 2rem);
+        font-weight: 800;
+    }
+    .rhythm-heading p,
+    .rhythm-card small,
+    .rhythm-empty { color: #95aaa7; }
+    .rhythm-eyebrow { color: #38d5bb; font-weight: 700; }
+    .rhythm-button {
+        display: inline-flex;
+        align-items: center;
+        padding: 11px 18px;
+        border-radius: 12px;
+        background: #0aa891;
+        color: white !important;
+        font-weight: 700;
+        text-decoration: none;
+        white-space: nowrap;
+    }
+    .rhythm-grid {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 16px;
+    }
+    .rhythm-card,
+    .rhythm-panel {
+        border: 1px solid #2a4442;
+        border-radius: 18px;
+        background: #172927;
+        box-shadow: 0 12px 28px rgba(0, 0, 0, .12);
+    }
+    .rhythm-card {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        padding: 22px;
+        color: inherit !important;
+        text-decoration: none;
+    }
+    .rhythm-card span { color: #bed5d0; }
+    .rhythm-card strong { font-size: 2rem; line-height: 1; }
+    .rhythm-panel { margin-top: 18px; padding: 22px; }
+    .rhythm-panel h2 {
+        margin: 0 0 18px;
+        font-size: 1.1rem;
+        font-weight: 750;
+    }
+    .rhythm-panel-heading h2 { margin: 0; }
+    .rhythm-panel-heading a,
+    .rhythm-table a { color: #52dcc5; }
+    .rhythm-statuses {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 12px;
+    }
+    .rhythm-statuses > div {
+        display: flex;
+        align-items: center;
+        gap: 9px;
+        padding: 14px;
+        border-radius: 12px;
+        background: #203634;
+    }
+    .rhythm-statuses b { margin-right: auto; }
+    .rhythm-dot {
+        width: 9px;
+        height: 9px;
+        border-radius: 50%;
+        background: #aaa;
+    }
+    .rhythm-dot--normal { background: #37d0a0; }
+    .rhythm-dot--alert { background: #fb7185; }
+    .rhythm-dot--noise { background: #fbbf24; }
+    .rhythm-table-wrap { overflow-x: auto; }
+    .rhythm-table {
+        width: 100%;
+        margin-top: 18px;
+        border-collapse: collapse;
+        white-space: nowrap;
+    }
+    .rhythm-table th,
+    .rhythm-table td {
+        padding: 13px 10px;
+        border-bottom: 1px solid #2a4442;
+        text-align: right;
+    }
+    .rhythm-table th { color: #9db8b3; font-weight: 600; }
+    .rhythm-empty { margin-top: 16px; }
+
+    @media (max-width: 900px) {
+        .rhythm-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    }
+    @media (max-width: 600px) {
+        .rhythm-heading { align-items: flex-start; flex-direction: column; }
+        .rhythm-grid,
+        .rhythm-statuses { grid-template-columns: 1fr; }
+    }
+</style>
+{% endblock %}

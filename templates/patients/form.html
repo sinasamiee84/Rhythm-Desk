@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+
+{% block title %}{% if object %}ویرایش{% else %}افزودن{% endif %} بیمار | RhythmDesk{% endblock %}
+
+{% block content %}
+<section class="rd-container auth-layout">
+    <div class="auth-card">
+        <h1>{% if object %}ویرایش پرونده{% else %}افزودن بیمار جدید{% endif %}</h1>
+        
+        <form method="post" class="auth-form">
+            {% csrf_token %}
+            
+            <div class="auth-fields">
+                {% for field in form %}
+                <div class="auth-field">
+                    <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                    {{ field }}
+                    {% for error in field.errors %}
+                        <div class="field-error">{{ error }}</div>
+                    {% endfor %}
+                </div>
+                {% endfor %}
+            </div>
+
+            <button class="auth-submit" type="submit">ذخیره اطلاعات</button>
+        </form>
+    </div>
+</section>
+{% endblock %}

@@ -1,0 +1,51 @@
+{% load static %}
+<!doctype html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{% block title %}RhythmDesk{% endblock %}</title>
+
+    <link rel="stylesheet"
+          href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.rtl.min.css">
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+</head>
+<body class="rd-app">
+    <header class="rd-header">
+        <nav class="rd-container rd-nav" aria-label="ناوبری اصلی">
+            <a class="rd-brand" href="{% if user.is_authenticated %}{% url 'patients:list' %}{% else %}{% url 'accounts:login' %}{% endif %}">
+                <span class="rd-brand-icon" aria-hidden="true">♥</span>
+                RhythmDesk
+            </a>
+
+            <div class="rd-nav-links">
+                {% if user.is_authenticated %}
+                    <span class="rd-user">دکتر {{ user.get_full_name|default:user.username }}</span>
+                    <a href="{% url 'patients:list' %}">بیماران من</a>
+                    <form action="{% url 'accounts:logout' %}" method="post">
+                        {% csrf_token %}
+                        <button class="rd-nav-button" type="submit">خروج</button>
+                    </form>
+                {% else %}
+                    <a href="{% url 'accounts:login' %}">ورود</a>
+                    <a class="rd-nav-button" href="{% url 'accounts:register' %}">ثبت‌نام پزشک</a>
+                {% endif %}
+            </div>
+        </nav>
+    </header>
+
+    <main class="rd-container">
+        {% if messages %}
+            <div class="rd-messages" aria-live="polite">
+                {% for message in messages %}
+                    <div class="rd-alert {% if message.level_tag == 'error' %}rd-alert--error{% endif %}">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+
+        {% block content %}{% endblock %}
+    </main>
+</body>
+</html>

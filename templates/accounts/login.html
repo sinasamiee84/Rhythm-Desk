@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+
+{% block title %}ورود پزشک | RhythmDesk{% endblock %}
+
+{% block content %}
+<section class="rd-container auth-layout">
+    <div class="auth-card">
+        <div class="auth-card-top">
+            <div class="auth-mark" aria-hidden="true">♥</div>
+            <span class="auth-eyebrow">خوش آمدید</span>
+            <h1>ورود به RhythmDesk</h1>
+            <p>برای دسترسی به پنل خود وارد حساب کاربری شوید.</p>
+        </div>
+
+        <form action="{% url 'accounts:login' %}" method="post" class="auth-form">
+            {% csrf_token %}
+
+            {% if next %}
+                <input type="hidden" name="next" value="{{ next }}">
+            {% endif %}
+
+            {% for hidden_field in form.hidden_fields %}
+                {{ hidden_field }}
+            {% endfor %}
+
+            {% if form.non_field_errors %}
+                <div class="form-error-box" role="alert">
+                    {% for error in form.non_field_errors %}
+                        <div>{{ error }}</div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+
+            <div class="auth-fields">
+                {% for field in form.visible_fields %}
+                    <div class="auth-field">
+                        <label for="{{ field.id_for_label }}">
+                            {% if field.name == "username" %}
+                                نام کاربری
+                            {% elif field.name == "password" %}
+                                رمز عبور
+                            {% else %}
+                                {{ field.label }}
+                            {% endif %}
+                        </label>
+
+                        {{ field }}
+
+                        {% for error in field.errors %}
+                            <div class="field-error">{{ error }}</div>
+                        {% endfor %}
+                    </div>
+                {% endfor %}
+            </div>
+
+            <button class="auth-submit" type="submit">ورود به حساب</button>
+
+            <p class="auth-switch">
+                حساب کاربری ندارید؟
+                <a href="{% url 'accounts:register' %}">ثبت‌نام پزشک</a>
+            </p>
+        </form>
+    </div>
+
+    <aside class="auth-aside">
+        <div class="auth-aside-content">
+            <span class="auth-aside-badge">RhythmDesk • پنل پزشکان</span>
+            <div class="auth-aside-heart" aria-hidden="true">♥</div>
+            <h2>تمرکز روی آنچه مهم است</h2>
+            <p>
+                محیطی منظم برای دسترسی به پرونده‌ها و مدیریت
+                فعالیت‌های روزانهٔ پزشک.
+            </p>
+            <div class="auth-pulse" aria-hidden="true"></div>
+        </div>
+    </aside>
+</section>
+{% endblock %}

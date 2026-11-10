@@ -1,0 +1,32 @@
+# templates/accounts/auth_card.html #}
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="auth-page">
+    <div class="auth-card card">
+        <div class="auth-card__head text-center">
+            <div class="auth-card__icon">🫀</div>
+            <h1 class="auth-card__title">{% block auth_title %}{% endblock %}</h1>
+            <p class="auth-card__subtitle">{% block auth_subtitle %}{% endblock %}</p>
+        </div>
+
+        <form method="post" novalidate class="auth-card__form">
+            {% csrf_token %}
+
+            {% if form.non_field_errors %}
+                <div class="alert alert-danger">
+                    {% for error in form.non_field_errors %}
+                        <div>{{ error }}</div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+
+            {% block auth_form %}{% endblock %}
+        </form>
+
+        <div class="auth-card__foot text-center">
+            {% block auth_footer %}{% endblock %}
+        </div>
+    </div>
+</div>
+{% endblock %}

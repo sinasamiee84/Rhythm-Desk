@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+
+{% block title %}بیماران من | RhythmDesk{% endblock %}
+
+{% block content %}
+<section class="rd-container rd-page">
+    <div class="rd-page-header">
+        <div>
+            <h1>بیماران من</h1>
+            <p>لیست پرونده‌ها و رکوردهای ECG شما</p>
+        </div>
+        <a href="{% url 'patients:create' %}" class="rd-nav-button">افزودن بیمار</a>
+    </div>
+
+    <div class="rd-card">
+        <table class="table rd-table">
+            <thead>
+                <tr>
+                    <th>نام بیمار</th>
+                    <th>سن</th>
+                    <th>کد ملی</th>
+                    <th>رکوردهای ECG</th>
+                    <th>عملیات</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for patient in patients %}
+                <tr>
+                    <td>{{ patient.first_name }} {{ patient.last_name }}</td>
+                    <td>{{ patient.age }}</td>
+                    <td>{{ patient.national_id }}</td>
+                    <td>
+                        {% with records=patient.ecg_records.all %}
+                            {% if records %}
+                                <span class="rd-badge">{{ records|length }} رکورد</span>
+                            {% else %}
+                                <span class="rd-muted">بدون رکورد</span>
+                            {% endif %}
+                        {% endwith %}
+                    </td>
+                    <td>
+                        <a href="{% url 'patients:detail' patient.pk %}">مشاهده</a> |
+                        <a href="{% url 'patients:update' patient.pk %}">ویرایش</a>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="5">هنوز بیماری ثبت نشده است.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</section>
+{% endblock %}

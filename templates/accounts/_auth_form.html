@@ -1,0 +1,70 @@
+<section class="auth-layout">
+    <div class="auth-card">
+        <div class="auth-card-top">
+            <span class="auth-mark" aria-hidden="true">♥</span>
+            <span class="auth-eyebrow">RhythmDesk</span>
+            <h1>{{ heading }}</h1>
+            <p>{{ description }}</p>
+        </div>
+
+        <form method="post">
+            {% csrf_token %}
+
+            {% if form.non_field_errors %}
+                <div class="form-error-box" role="alert">
+                    {{ form.non_field_errors }}
+                </div>
+            {% endif %}
+
+            <div class="auth-fields {% if is_register %}auth-fields--register{% endif %}">
+                {% for field in form %}
+                    {% if field.is_hidden %}
+                        {{ field }}
+                    {% else %}
+                        <div class="auth-field">
+                            <label for="{{ field.id_for_label }}">
+                                {{ field.label }}
+                                {% if field.field.required %}
+                                    <span class="required-mark">*</span>
+                                {% endif %}
+                            </label>
+                            {{ field }}
+                            {% if field.help_text %}
+                                <small class="field-help">{{ field.help_text|striptags }}</small>
+                            {% endif %}
+                            {% for error in field.errors %}
+                                <div class="field-error">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                {% endfor %}
+            </div>
+
+            {% if next %}
+                <input type="hidden" name="next" value="{{ next }}">
+            {% endif %}
+
+            <button class="auth-submit" type="submit">{{ submit_label }}</button>
+        </form>
+
+        <p class="auth-switch">
+            {% if is_register %}
+                قبلاً حساب ساخته‌اید؟
+                <a href="{% url 'accounts:login' %}">وارد شوید</a>
+            {% else %}
+                هنوز حساب ندارید؟
+                <a href="{% url 'accounts:register' %}">ثبت‌نام کنید</a>
+            {% endif %}
+        </p>
+    </div>
+
+    <aside class="auth-aside">
+        <div class="auth-aside-content">
+            <span class="auth-aside-badge">مدیریت هوشمند پرونده‌های قلب</span>
+            <div class="auth-aside-heart" aria-hidden="true">♥</div>
+            <h2>همهٔ پرونده‌ها، در یک فضای امن</h2>
+            <p>بیماران و اطلاعات ثبت‌شدهٔ خود را با ظاهری ساده و یکپارچه مدیریت کنید.</p>
+            <div class="auth-pulse" aria-hidden="true"></div>
+        </div>
+    </aside>
+</section>

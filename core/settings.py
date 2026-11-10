@@ -12,6 +12,10 @@ https://docs.djangoproject.com/en/6.1/ref/settings/
 
 from pathlib import Path
 
+from apps import accounts
+
+
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -31,14 +35,30 @@ ALLOWED_HOSTS = []
 # Application definition
 
 INSTALLED_APPS = [
+    'unfold',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-]
 
+    # افزونه‌های فرم و API
+    'crispy_forms',
+    'crispy_bootstrap5',  # <--- حتماً این خط را اضافه کن
+    'rest_framework',
+
+    # اپلیکیشن‌های پروژه
+    'apps.accounts',
+    'apps.patients',
+]
+CRISPY_ALLOWED_TEMPLATE_PACKS = "bootstrap5"
+CRISPY_TEMPLATE_PACK = "bootstrap5"
+
+# آدرس‌های پیش‌فرض
+LOGIN_REDIRECT_URL = 'patients:list'
+LOGOUT_REDIRECT_URL = 'accounts:login'
+LOGIN_URL = 'accounts:login'
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
@@ -66,7 +86,14 @@ TEMPLATES = [
         },
     },
 ]
-
+UNFOLD = {
+    "SITE_TITLE": "مدیریت RhythmDesk",
+    "SITE_HEADER": "RhythmDesk",
+    "SITE_SUBHEADER": "مدیریت بیماران و سیگنال قلب",
+    "SITE_SYMBOL": "monitor_heart",
+    "THEME": "dark",
+    "DASHBOARD_CALLBACK": "apps.patients.admin_dashboard.dashboard_callback",
+}
 WSGI_APPLICATION = 'core.wsgi.application'
 
 
@@ -103,20 +130,28 @@ AUTH_PASSWORD_VALIDATORS = [
 # Internationalization
 # https://docs.djangoproject.com/en/6.1/topics/i18n/
 
-LANGUAGE_CODE = 'en-us'
+# Internationalization
+# https://docs.djangoproject.com/en/6.1/topics/i18n/
 
-TIME_ZONE = 'UTC'
+LANGUAGE_CODE = 'fa-ir'
+
+TIME_ZONE = 'Asia/Tehran'
 
 USE_I18N = True
 
 USE_TZ = True
 
 
+AUTH_USER_MODEL = 'accounts.User'
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/6.1/howto/static-files/
 
 STATIC_URL = 'static/'
+STATICFILES_DIRS = [BASE_DIR / 'static',]
+STATIC_ROOT = BASE_DIR / 'staticfiles'
 
+MEDIA_ROOT = BASE_DIR / 'media'
+MEDIA_URL = '/media/'
 
 # Email
 # https://docs.djangoproject.com/en/6.1/topics/email/#topic-email-configuration

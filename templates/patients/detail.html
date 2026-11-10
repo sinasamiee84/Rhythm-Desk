@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+
+{% block title %}پرونده {{ patient.first_name }} | RhythmDesk{% endblock %}
+
+{% block content %}
+<section class="rd-container rd-page">
+    <div class="rd-card">
+        <h1>پرونده بیمار: {{ patient.first_name }} {{ patient.last_name }}</h1>
+        <hr>
+        <div class="rd-detail-grid">
+            <p><strong>کد ملی:</strong> {{ patient.national_id }}</p>
+            <p><strong>سن:</strong> {{ patient.age }}</p>
+            <p><strong>جنسیت:</strong> {{ patient.get_gender_display }}</p>
+            <p><strong>تلفن:</strong> {{ patient.phone_number }}</p>
+            <p><strong>سابقه:</strong> {{ patient.medical_history }}</p>
+        </div>
+    </div>
+
+    <div class="rd-card" style="margin-top: 1.5rem;">
+        <div class="rd-page-header">
+            <h2>رکوردهای ECG</h2>
+            <a href="{% url 'patients:ecg_create' patient.pk %}" class="rd-nav-button">ثبت رکورد جدید</a>
+        </div>
+
+        <table class="table rd-table">
+            <thead>
+                <tr>
+                    <th>تاریخ ثبت</th>
+                    <th>فرکانس نمونه‌برداری</th>
+                    <th>BPM</th>
+                    <th>نوع آریتمی</th>
+                    <th>وضعیت سیگنال</th>
+                    <th>فایل</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for record in ecg_records %}
+                <tr>
+                    <td>{{ record.created_at|date:"Y/m/d H:i" }}</td>
+                    <td>{{ record.sampling_rate }}</td>
+                    <td>{{ record.bpm|default:"—" }}</td>
+                    <td>{{ record.arrhythmia_type|default:"—" }}</td>
+                    <td>
+                        <span class="rd-badge rd-badge--{{ record.signal_status|lower }}">
+                            {{ record.get_signal_status_display }}
+                        </span>
+                    </td>
+                    <td>
+                        {% if record.signal_file %}
+                            <a href="{{ record.signal_file.url }}" target="_blank">دانلود</a>
+                        {% else %}
+                            —
+                        {% endif %}
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="6">برای این بیمار هنوز رکورد ECG ثبت نشده است.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <div style="margin-top: 1.5rem;">
+        <a href="{% url 'patients:update' patient.pk %}" class="btn btn-primary">ویرایش</a>
+        <a href="{% url 'patients:list' %}" class="btn btn-secondary">بازگشت</a>
+    </div>
+</section>
+{% endblock %}
