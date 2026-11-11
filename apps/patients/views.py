@@ -13,7 +13,8 @@ from django.views.generic import (
 from apps.patients.models import Patient, ECGRecord
 from apps.patients.services import analyze_ecg
 from .forms import PatientForm, ECGRecordForm
-
+from logging import getLogger
+logger = getLogger(__name__)
 
 class PatientOwnerMixin(LoginRequiredMixin, UserPassesTestMixin):
     """دسترسی فقط به بیمارانِ خودِ پزشک"""
@@ -110,13 +111,13 @@ class CreateECGRecordView(LoginRequiredMixin, CreateView):
         return super().dispatch(request, *args, **kwargs)
 
     def form_valid(self, form):
-        # ابتدا رکورد را ذخیره می‌کنیم تا فایل در storage ثبت شود.
+        # ابتدا رکورد و فایل را ذخیره می‌کنیم.
         record = form.save(commit=False)
         record.patient = self.patient
         record.save()
 
         try:
-            # analyze_ecg باید فایل و نرخ نمونه‌برداری را دریافت کند.
+            # FieldFile را مستقیم می‌دهیم؛ سرویس فایل را از ابتدا می‌خواند.
             result = analyze_ecg(
                 record.signal_file,
                 record.sampling_rate,
@@ -124,11 +125,9 @@ class CreateECGRecordView(LoginRequiredMixin, CreateView):
 
             if result.get("success"):
                 record.bpm = result.get("bpm")
-                record.arrhythmia_type = result.get(
-                    "arrhythmia_type",
-                    "نامشخص",
-                )
+                record.arrhythmia_type = result.get("arrhythmia_type") or "نامشخص"
                 record.signal_status = result.get("status", "PENDING")
+
                 record.save(
                     update_fields=[
                         "bpm",
@@ -136,29 +135,31 @@ class CreateECGRecordView(LoginRequiredMixin, CreateView):
                         "signal_status",
                     ]
                 )
-                messages.success(
-                    self.request,
-                    "فایل ECG بارگذاری و تحلیل شد.",
-                )
+
+                messages.success(self.request, "فایل ECG بارگذاری و تحلیل شد.")
+
             else:
                 record.signal_status = ECGRecord.SignalStatus.NOISE
-                record.arrhythmia_type = result.get(
-                    "arrhythmia_type",
-                    "تحلیل سیگنال ناموفق بود.",
+                record.arrhythmia_type = (
+                        result.get("arrhythmia_type") or "تحلیل سیگنال ناموفق بود."
                 )
+
                 record.save(
                     update_fields=[
                         "signal_status",
                         "arrhythmia_type",
                     ]
                 )
+
                 messages.warning(
                     self.request,
                     result.get("error", "تحلیل سیگنال انجام نشد."),
                 )
 
         except Exception:
-            # خطای تحلیل نباید باعث از دست رفتن فایل بارگذاری‌شده شود.
+            # این خط علت واقعی خطا را در ترمینالی که runserver اجرا شده ثبت می‌کند.
+            logger.exception("ECG analysis failed for record %s", record.pk)
+
             record.signal_status = ECGRecord.SignalStatus.NOISE
             record.arrhythmia_type = "خطا در پردازش سیگنال"
             record.save(
@@ -167,9 +168,10 @@ class CreateECGRecordView(LoginRequiredMixin, CreateView):
                     "arrhythmia_type",
                 ]
             )
+
             messages.warning(
                 self.request,
-                "رکورد ذخیره شد، اما هنگام تحلیل سیگنال خطایی رخ داد.",
+                "رکورد ذخیره شد، اما تحلیل خطا داد. جزئیات خطا در ترمینال سرور ثبت شده است.",
             )
 
         self.object = record
@@ -214,6 +216,67 @@ class ECGRecordUpdateView(ECGRecordOwnerMixin, UpdateView):
         )
 
     def form_valid(self, form):
-        messages.info(self.request, "رکورد ECG با موفقیت ویرایش شد.")
-        return super().form_valid(form)
+        # ذخیره تغییرات رکورد و فایل جدید (در صورت آپلود)
+        record = form.save(commit=False)
+        record.save()
+
+        try:
+            # تحلیل مجدد سیگنال با فایل جدید یا موجود
+            result = analyze_ecg(
+                record.signal_file,
+                record.sampling_rate,
+            )
+
+            if result.get("success"):
+                record.bpm = result.get("bpm")
+                record.arrhythmia_type = result.get("arrhythmia_type") or "نامشخص"
+                record.signal_status = result.get("status", "PENDING")
+
+                record.save(
+                    update_fields=[
+                        "bpm",
+                        "arrhythmia_type",
+                        "signal_status",
+                    ]
+                )
+
+                messages.success(self.request, "رکورد ECG ویرایش و مجدداً تحلیل شد.")
+
+            else:
+                record.signal_status = ECGRecord.SignalStatus.NOISE
+                record.arrhythmia_type = (
+                    result.get("arrhythmia_type") or "تحلیل سیگنال ناموفق بود."
+                )
+
+                record.save(
+                    update_fields=[
+                        "signal_status",
+                        "arrhythmia_type",
+                    ]
+                )
+
+                messages.warning(
+                    self.request,
+                    result.get("error", "تحلیل سیگنال انجام نشد."),
+                )
+
+        except Exception:
+            logger.exception("ECG re-analysis failed for record %s", record.pk)
+
+            record.signal_status = ECGRecord.SignalStatus.NOISE
+            record.arrhythmia_type = "خطا در پردازش سیگنال"
+            record.save(
+                update_fields=[
+                    "signal_status",
+                    "arrhythmia_type",
+                ]
+            )
+
+            messages.warning(
+                self.request,
+                "رکورد ذخیره شد، اما تحلیل مجدد خطا داد.",
+            )
+
+        self.object = record
+        return redirect(self.get_success_url())
 
