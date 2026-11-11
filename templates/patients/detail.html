@@ -64,10 +64,10 @@
         <h5 class="mb-0 text-dark fw-bold">
             <i class="bi bi-heart-pulse text-danger"></i> رکوردهای نوار قلب (ECG) ثبت شده
         </h5>
-        <!-- اگر دکمه ثبت رکورد جدید ECG را هم خواستید در این مسیر قرار دهید -->
-        <!-- <a href="{% url 'patients:ecg_create' patient.pk %}" class="btn btn-success btn-sm">
+        <!-- دکمه فعال‌شده برای بارگذاری رکورد جدید ECG با ارسال pk بیمار -->
+        <a href="{% url 'patients:ecg_create' patient.pk %}" class="btn btn-success btn-sm shadow-sm">
             <i class="bi bi-file-earmark-medical-fill"></i> بارگذاری رکورد جدید
-        </a> -->
+        </a>
     </div>
 
     <div class="card-body p-0">

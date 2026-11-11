@@ -45,7 +45,7 @@ INSTALLED_APPS = [
 
     # افزونه‌های فرم و API
     'crispy_forms',
-    'crispy_bootstrap5',  # <--- حتماً این خط را اضافه کن
+    'crispy_bootstrap5',
     'rest_framework',
 
     # اپلیکیشن‌های پروژه

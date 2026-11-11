@@ -13,7 +13,7 @@ from .forms import ProfileUpdateForm
 
 class CustomLoginView(LoginView):
     template_name = 'accounts/login.html'
-    # اگر از قبل لاگین کرده بود، نذار دوباره فرم لاگین رو ببینه
+
     redirect_authenticated_user = True
 
     def get_success_url(self):
@@ -21,7 +21,7 @@ class CustomLoginView(LoginView):
 
 
 class CustomLogoutView(LogoutView):
-    # در جنگو 5 نیازی به LoginRequiredMixin برای لاگ‌اوت نیست
+
     next_page = reverse_lazy('accounts:login')
 
 
@@ -34,7 +34,7 @@ class CustomRegisterView(CreateView):
     def form_valid(self, form):
         # ذخیره یوزر
         response = super().form_valid(form)
-        # لاگین خودکار بلافاصله بعد از ثبت‌نام (اختیاری اما کاربرپسند)
+
         login(self.request, self.object)
         messages.success(self.request, 'اکانت شما با موفقیت ساخته شد و وارد شدید.')
         return response

@@ -35,3 +35,37 @@ cardioflow/
 ├── templates/         # HTML templates (Bootstrap 5 UI)
 ├── requirements.txt   # Project dependencies
 └── manage.py          # Django management script
+```
+
+## 📸 Screenshots
+
+### 🔐 Authentication
+
+| Login Page | Register Page |
+|:---:|:---:|
+| ![login](assets/login.png) | ![register](assets/register.png) |
+
+### 🏠 Dashboard & Profile
+
+| Admin Home | User Profile |
+|:---:|:---:|
+| ![home admin](assets/home_admin.png) | ![profile](assets/profile.png) |
+
+### 👤 Patient Management
+
+| Patient List | Create Patient |
+|:---:|:---:|
+| ![patient list](assets/patient_list.png) | ![create patient](assets/create_patient.png) |
+
+### 📈 ECG Records
+
+| Record List | ECG Analysis Detail |
+|:---:|:---:|
+| ![record list](assets/record_list.png) | ![ecg detail](assets/ecg_detail.png) |
+
+### ⚙️ Django Administration
+
+| Patients Admin | Users Admin | Login Admin |
+|:---:|:---:|:---:|
+| ![patients admin](assets/patients_admin.png) | ![user admin](assets/user_admin.png) | ![login admin](assets/ligon_admin%20(1).png) |
+
