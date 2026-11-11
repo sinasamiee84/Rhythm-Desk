@@ -1,0 +1,80 @@
+{% extends "base.html" %}
+
+{% block title %}پروفایل پزشک | کاردیوفلو{% endblock %}
+
+{% block content %}
+<section class="rd-container auth-layout py-4">
+    <div class="auth-card shadow-sm border-0 p-4 p-md-5 bg-white rounded-4 w-100" style="max-width: 750px; margin: 0 auto;">
+
+        <div class="auth-card-top text-center mb-4">
+            <div class="auth-mark mb-2" style="font-size: 2.5rem;">👨‍⚕️</div>
+            <span class="auth-eyebrow text-primary fw-bold">پنل مدیریت پزشک</span>
+            <h1 class="h3 fw-bold mt-1">ویرایش پروفایل و اطلاعات حساب</h1>
+            <p class="text-muted small">تصویر، شماره نظام پزشکی و مشخصات فردی خود را مدیریت کنید.</p>
+        </div>
+
+        <form action="{% url 'accounts:profile' %}" method="post" enctype="multipart/form-data" class="auth-form">
+            {% csrf_token %}
+
+            {% if form.non_field_errors or user_form.non_field_errors %}
+                <div class="alert alert-danger py-2 small" role="alert">
+                    {% for error in form.non_field_errors %}<div>{{ error }}</div>{% endfor %}
+                    {% for error in user_form.non_field_errors %}<div>{{ error }}</div>{% endfor %}
+                </div>
+            {% endif %}
+
+            <!-- بخش اطلاعات کاربری (User) -->
+            <div class="p-3 mb-4 bg-light rounded-3 border">
+                <h5 class="fw-bold text-dark mb-3" style="font-size: 1rem;">📋 اطلاعات حساب کاربری</h5>
+                <div class="row g-3">
+                    {% for field in user_form.visible_fields %}
+                        <div class="col-md-6 auth-field">
+                            <label for="{{ field.id_for_label }}" class="form-label fw-semibold small">
+                                {{ field.label }}
+                                {% if field.field.required %}<span class="text-danger">*</span>{% endif %}
+                            </label>
+                            {{ field }}
+                            {% if field.help_text %}<div class="form-text text-muted" style="font-size: 0.75rem;">{{ field.help_text }}</div>{% endif %}
+                            {% for error in field.errors %}<div class="text-danger small mt-1">{{ error }}</div>{% endfor %}
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- بخش مشخصات پروفایل (Profile) -->
+            <div class="p-3 mb-4 bg-light rounded-3 border">
+                <h5 class="fw-bold text-dark mb-3" style="font-size: 1rem;">🩺 اطلاعات تخصصی و آواتار</h5>
+
+                {% if user.profile.avatar %}
+                    <div class="d-flex align-items-center gap-3 mb-3 p-2 bg-white rounded border">
+                        <img src="{{ user.profile.avatar.url }}" alt="تصویر فعلی" class="rounded-circle shadow-sm" style="width: 60px; height: 60px; object-fit: cover;">
+                        <div>
+                            <span class="d-block small fw-bold text-dark">تصویر فعلی شما</span>
+                            <span class="text-muted" style="font-size: 0.8rem;">برای تغییر، تصویر جدیدی انتخاب کنید.</span>
+                        </div>
+                    </div>
+                {% endif %}
+
+                <div class="row g-3">
+                    {% for field in form.visible_fields %}
+                        <div class="col-12 auth-field">
+                            <label for="{{ field.id_for_label }}" class="form-label fw-semibold small">
+                                {{ field.label }}
+                                {% if field.field.required %}<span class="text-danger">*</span>{% endif %}
+                            </label>
+                            {{ field }}
+                            {% if field.help_text %}<div class="form-text text-muted" style="font-size: 0.75rem;">{{ field.help_text }}</div>{% endif %}
+                            {% for error in field.errors %}<div class="text-danger small mt-1">{{ error }}</div>{% endfor %}
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <div class="d-grid gap-2">
+                <button class="btn btn-primary btn-lg shadow-sm fw-bold" type="submit">ذخیره تغییرات پروفایل</button>
+                <a href="{% url 'patients:list' %}" class="btn btn-outline-secondary btn-sm">بازگشت به لیست بیماران</a>
+            </div>
+        </form>
+    </div>
+</section>
+{% endblock %}

@@ -1,0 +1,41 @@
+{% extends 'base.html' %}
+{% block title %}حذف رکورد ECG #{{ object.pk }} | کاردیوفلو{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <div class="card shadow-sm border-danger">
+            <div class="card-body p-4 text-center">
+                <i class="bi bi-exclamation-triangle-fill text-danger display-4 d-block mb-3"></i>
+                <h3 class="fw-bold text-danger mb-3">حذف رکورد ECG</h3>
+
+                <p class="text-muted mb-2">
+                    آیا از حذف رکورد <strong>#{{ object.pk }}</strong> مربوط به بیمار
+                    <strong>{{ object.patient.first_name }} {{ object.patient.last_name }}</strong> مطمئن هستید؟
+                </p>
+                <p class="small text-muted mb-4">
+                    تاریخ ثبت: {{ object.created_at|date:"Y/m/d - H:i" }}
+                    {% if object.bpm %} | ضربان: {{ object.bpm }} BPM{% endif %}
+                </p>
+
+                <div class="alert alert-warning small text-start mb-4">
+                    <i class="bi bi-info-circle"></i>
+                    این عملیات بازگشت‌پذیر نیست و فایل سیگنال بارگذاری‌شده نیز حذف خواهد شد.
+                </div>
+
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="d-flex justify-content-center gap-2">
+                        <button type="submit" class="btn btn-danger px-4">
+                            <i class="bi bi-trash"></i> بله، حذف کن
+                        </button>
+                        <a href="{% url 'patients:detail' object.patient.pk %}" class="btn btn-outline-secondary px-4">
+                            انصراف
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

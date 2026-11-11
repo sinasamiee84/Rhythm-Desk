@@ -9,8 +9,10 @@ from .models import Patient, ECGRecord
 class PatientForm(forms.ModelForm):
     class Meta:
         model = Patient
-        fields = ['first_name', 'last_name', 'age', 'gender', 'national_id', 'phone_number']
-
+        fields = ['first_name', 'last_name', 'age', 'gender', 'national_id', 'phone_number','medical_history']
+        widgets = {
+            'medical_history': forms.Textarea(attrs={'rows': 4, 'placeholder': 'سوابق بیماری، داروها، جراحی‌ها و ...'}),
+        }
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.helper = FormHelper()
@@ -30,6 +32,7 @@ class PatientForm(forms.ModelForm):
             ),
             'national_id',
             'phone_number',
+            'medical_history',
         )
 
 class ECGRecordForm(forms.ModelForm):

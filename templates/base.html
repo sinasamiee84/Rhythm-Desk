@@ -1,51 +1,190 @@
-{% load static %}
-<!doctype html>
+<!DOCTYPE html>
 <html lang="fa" dir="rtl">
 <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>{% block title %}RhythmDesk{% endblock %}</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}پلتفرم تخصصی قلب CardioFlow{% endblock %}</title>
 
-    <link rel="stylesheet"
-          href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.rtl.min.css">
-    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+    <!-- Bootstrap 5 RTL CDN -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.rtl.min.css">
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <!-- Vazirmatn Font -->
+    <link href="https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/Vazirmatn-font-face.css" rel="stylesheet" type="text/css" />
+
+    <style>
+        body {
+            font-family: 'Vazirmatn', sans-serif;
+            background-color: #f4f7f6;
+            color: #333;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        .navbar {
+            background: linear-gradient(135deg, #0d6efd, #0dcaf0);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+        }
+        .card {
+            border: none;
+            border-radius: 12px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+            transition: transform 0.2s ease;
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, #0d6efd, #0a58ca);
+            border: none;
+            border-radius: 8px;
+        }
+        .btn-success {
+            background: linear-gradient(135deg, #198754, #146c43);
+            border: none;
+            border-radius: 8px;
+        }
+        footer {
+            background-color: #ffffff;
+            border-top: 1px solid #eaeaea;
+            margin-top: auto;
+            font-size: 0.9rem;
+            color: #6c757d;
+        }
+        /* آواتار پروفایل پزشک در نوار بالایی */
+        .profile-link {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            text-decoration: none;
+            color: #fff;
+            transition: opacity .2s ease;
+        }
+        .profile-link:hover { opacity: .85; }
+        .profile-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid #fff;
+            background: #fff;
+            color: #0d6efd;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 1rem;
+        }
+        .profile-name { line-height: 1.2; }
+        .profile-name small { display: block; font-size: .72rem; opacity: .85; }
+        /* استایل استاندارد Bootstrap برای اینپوت‌های فرم‌های پیش‌فرض جنگو */
+.card form input[type="text"],
+.card form input[type="password"],
+.card form input[type="email"],
+.card form input[type="number"],
+.card form select,
+.card form textarea {
+    display: block;
+    width: 100%;
+    padding: 0.55rem 0.75rem;
+    font-size: 0.95rem;
+    line-height: 1.5;
+    color: #212529;
+    background-color: #fff;
+    border: 1px solid #ced4da;
+    border-radius: 8px;
+    transition: border-color .15s ease-in-out, box-shadow .15s ease-in-out;
+}
+.card form input:focus,
+.card form select:focus,
+.card form textarea:focus {
+    border-color: #86b7fe;
+    outline: 0;
+    box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+}
+
+    </style>
+    {% block extra_css %}{% endblock %}
 </head>
-<body class="rd-app">
-    <header class="rd-header">
-        <nav class="rd-container rd-nav" aria-label="ناوبری اصلی">
-            <a class="rd-brand" href="{% if user.is_authenticated %}{% url 'patients:list' %}{% else %}{% url 'accounts:login' %}{% endif %}">
-                <span class="rd-brand-icon" aria-hidden="true">♥</span>
-                RhythmDesk
+<body>
+
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-dark py-3">
+        <div class="container">
+            <a class="navbar-brand fw-bold fs-4 d-flex align-items-center gap-2" href="{% url 'patients:list' %}">
+                <i class="bi bi-heart-pulse-fill text-danger fs-3"></i> کاردیوفلو <span class="badge bg-light text-primary fs-6">ECG AI</span>
             </a>
-
-            <div class="rd-nav-links">
-                {% if user.is_authenticated %}
-                    <span class="rd-user">دکتر {{ user.get_full_name|default:user.username }}</span>
-                    <a href="{% url 'patients:list' %}">بیماران من</a>
-                    <form action="{% url 'accounts:logout' %}" method="post">
-                        {% csrf_token %}
-                        <button class="rd-nav-button" type="submit">خروج</button>
-                    </form>
-                {% else %}
-                    <a href="{% url 'accounts:login' %}">ورود</a>
-                    <a class="rd-nav-button" href="{% url 'accounts:register' %}">ثبت‌نام پزشک</a>
-                {% endif %}
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                    {% if user.is_authenticated %}
+                        <li class="nav-item">
+                            <a class="nav-link active" href="{% url 'patients:list' %}"><i class="bi bi-people-fill"></i> لیست بیماران</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'patients:create' %}"><i class="bi bi-person-plus-fill"></i> ثبت بیمار جدید</a>
+                        </li>
+                    {% endif %}
+                </ul>
+                <ul class="navbar-nav ms-auto align-items-center">
+                    {% if user.is_authenticated %}
+                        <!-- عکس پروفایل + نام دکتر + ویرایش پروفایل (همه کلیک‌شدنی) -->
+                        <li class="nav-item me-3">
+                            <a class="profile-link" href="{% url 'accounts:profile' %}">
+                                {% if user.profile.avatar %}
+                                    <img class="profile-avatar" src="{{ user.profile.avatar.url }}" alt="پروفایل دکتر">
+                                {% else %}
+                                    <span class="profile-avatar">{{ user.first_name.0|default:user.username.0|upper }}</span>
+                                {% endif %}
+                                <span class="profile-name">
+                                    دکتر {{ user.get_full_name|default:user.username }}
+                                    <small>ویرایش پروفایل</small>
+                                </span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <form action="{% url 'accounts:logout' %}" method="post" class="d-inline">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-outline-light btn-sm px-3 rounded-pill">
+                                    <i class="bi bi-box-arrow-right"></i> خروج
+                                </button>
+                            </form>
+                        </li>
+                    {% else %}
+                        <li class="nav-item me-2">
+                            <a class="btn btn-light btn-sm px-3 rounded-pill text-primary fw-bold" href="{% url 'accounts:login' %}">ورود</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="btn btn-outline-light btn-sm px-3 rounded-pill" href="{% url 'accounts:register' %}">ثبت‌نام پزشک</a>
+                        </li>
+                    {% endif %}
+                </ul>
             </div>
-        </nav>
-    </header>
+        </div>
+    </nav>
 
-    <main class="rd-container">
+    <!-- Main Messages & Content -->
+    <main class="container my-4">
         {% if messages %}
-            <div class="rd-messages" aria-live="polite">
-                {% for message in messages %}
-                    <div class="rd-alert {% if message.level_tag == 'error' %}rd-alert--error{% endif %}">
-                        {{ message }}
-                    </div>
-                {% endfor %}
-            </div>
+            {% for message in messages %}
+                <div class="alert alert-{{ message.tags }} alert-dismissible fade show shadow-sm" role="alert">
+                    <i class="bi bi-info-circle-fill me-2"></i> {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            {% endfor %}
         {% endif %}
 
         {% block content %}{% endblock %}
     </main>
+
+    <!-- Footer -->
+    <footer class="text-center py-3">
+        <div class="container">
+            <p class="mb-0">سامانه هوشمند تحلیل سیگنال‌های الکتروکاردیوگرام (CardioFlow) &copy; ۱۴۰۵</p>
+        </div>
+    </footer>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    {% block extra_js %}{% endblock %}
 </body>
 </html>

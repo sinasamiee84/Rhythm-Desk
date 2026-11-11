@@ -1,87 +1,56 @@
 {% extends "base.html" %}
 
-{% block title %}ثبت‌نام پزشک | RhythmDesk{% endblock %}
+{% block title %}ثبت‌نام پزشک | کاردیوفلو{% endblock %}
 
 {% block content %}
-<section class="rd-container auth-layout">
-    <div class="auth-card">
-        <div class="auth-card-top">
-            <div class="auth-mark" aria-hidden="true">♥</div>
-            <span class="auth-eyebrow">به RhythmDesk بپیوندید</span>
-            <h1>ثبت‌نام پزشک</h1>
-            <p>اطلاعات خود را وارد کنید تا حساب کاربری‌تان ساخته شود.</p>
-        </div>
+<div class="row justify-content-center my-4">
+    <div class="col-md-7 col-lg-6">
+        <div class="card p-4 p-md-5">
 
-        <form action="{% url 'accounts:register' %}" method="post" class="auth-form">
-            {% csrf_token %}
+            <div class="text-center mb-4">
+                <div class="display-5 mb-2">🩺</div>
+                <h1 class="h3 fw-bold text-dark">ثبت‌نام پزشک در کاردیوفلو</h1>
+                <p class="text-muted small">برای دسترسی به پنل مدیریت بیماران و نوار قلب‌ها حساب بسازید.</p>
+            </div>
 
-            {% for hidden_field in form.hidden_fields %}
-                {{ hidden_field }}
-            {% endfor %}
+            <form action="{% url 'accounts:register' %}" method="post">
+                {% csrf_token %}
 
-            {% if form.non_field_errors %}
-                <div class="form-error-box" role="alert">
-                    {% for error in form.non_field_errors %}
-                        <div>{{ error }}</div>
-                    {% endfor %}
-                </div>
-            {% endif %}
+                {% if form.non_field_errors %}
+                    <div class="alert alert-danger p-2 small" role="alert">
+                        {% for error in form.non_field_errors %}
+                            <div>{{ error }}</div>
+                        {% endfor %}
+                    </div>
+                {% endif %}
 
-            <div class="auth-fields auth-fields--register">
-                {% for field in form.visible_fields %}
-                    <div class="auth-field">
-                        <label for="{{ field.id_for_label }}">
-                            {% if field.name == "username" %}
-                                نام کاربری
-                            {% elif field.name == "first_name" %}
-                                نام
-                            {% elif field.name == "last_name" %}
-                                نام خانوادگی
-                            {% elif field.name == "email" %}
-                                ایمیل
-                            {% elif field.name == "password1" %}
-                                رمز عبور
-                            {% elif field.name == "password2" %}
-                                تکرار رمز عبور
-                            {% else %}
-                                {{ field.label }}
-                            {% endif %}
-                            {% if field.field.required %}<span class="required-mark">*</span>{% endif %}
+                {% for field in form %}
+                    <div class="mb-3">
+                        <label for="{{ field.id_for_label }}" class="form-label fw-semibold small text-secondary">
+                            {{ field.label }}
+                            {% if field.field.required %}<span class="text-danger">*</span>{% endif %}
                         </label>
-
                         {{ field }}
-
                         {% if field.help_text %}
-                            <small class="field-help">{{ field.help_text }}</small>
+                            <div class="form-text text-muted" style="font-size: 0.75rem;">{{ field.help_text }}</div>
                         {% endif %}
-
                         {% for error in field.errors %}
-                            <div class="field-error">{{ error }}</div>
+                            <div class="text-danger small mt-1">{{ error }}</div>
                         {% endfor %}
                     </div>
                 {% endfor %}
-            </div>
 
-            <button class="auth-submit" type="submit">ایجاد حساب کاربری</button>
+                <div class="d-grid mt-4">
+                    <button class="btn btn-primary btn-lg fw-bold shadow-sm" type="submit">ثبت‌نام و ورود به سامانه</button>
+                </div>
 
-            <p class="auth-switch">
-                قبلاً ثبت‌نام کرده‌اید؟
-                <a href="{% url 'accounts:login' %}">ورود</a>
-            </p>
-        </form>
-    </div>
+                <p class="text-center mt-4 mb-0 text-muted small">
+                    قبلاً حساب کاربری ساخته‌اید؟
+                    <a href="{% url 'accounts:login' %}" class="text-primary text-decoration-none fw-semibold">وارد شوید</a>
+                </p>
+            </form>
 
-    <aside class="auth-aside">
-        <div class="auth-aside-content">
-            <span class="auth-aside-badge">RhythmDesk • پنل پزشکان</span>
-            <div class="auth-aside-heart" aria-hidden="true">♥</div>
-            <h2>شروعی ساده، تجربه‌ای منظم</h2>
-            <p>
-                حساب پزشک خود را بسازید و محیط کاری‌تان را
-                در یک فضای یکپارچه مدیریت کنید.
-            </p>
-            <div class="auth-pulse" aria-hidden="true"></div>
         </div>
-    </aside>
-</section>
+    </div>
+</div>
 {% endblock %}

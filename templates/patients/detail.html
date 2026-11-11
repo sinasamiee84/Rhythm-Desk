@@ -1,70 +1,136 @@
-{% extends "base.html" %}
-
-{% block title %}پرونده {{ patient.first_name }} | RhythmDesk{% endblock %}
+{% extends 'base.html' %}
+{% block title %}پرونده {{ patient }} | کاردیوفلو{% endblock %}
 
 {% block content %}
-<section class="rd-container rd-page">
-    <div class="rd-card">
-        <h1>پرونده بیمار: {{ patient.first_name }} {{ patient.last_name }}</h1>
-        <hr>
-        <div class="rd-detail-grid">
-            <p><strong>کد ملی:</strong> {{ patient.national_id }}</p>
-            <p><strong>سن:</strong> {{ patient.age }}</p>
-            <p><strong>جنسیت:</strong> {{ patient.get_gender_display }}</p>
-            <p><strong>تلفن:</strong> {{ patient.phone_number }}</p>
-            <p><strong>سابقه:</strong> {{ patient.medical_history }}</p>
+<!-- هدر صفحه -->
+<div class="row mb-4 align-items-center">
+    <div class="col-md-8">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb mb-2">
+                <li class="breadcrumb-item"><a href="{% url 'patients:list' %}">لیست بیماران</a></li>
+                <li class="breadcrumb-item active" aria-current="page">پرونده بیمار</li>
+            </ol>
+        </nav>
+        <h2 class="fw-bold text-dark"><i class="bi bi-person-badge"></i> {{ patient.first_name }} {{ patient.last_name }}</h2>
+    </div>
+
+    <div class="col-md-4 text-md-end">
+        <a href="{% url 'patients:update' patient.pk %}" class="btn btn-outline-primary shadow-sm mb-2 mb-md-0">
+            <i class="bi bi-pencil-square"></i> ویرایش پرونده و سوابق
+        </a>
+        <a href="{% url 'patients:ecg_create' patient.pk %}" class="btn btn-success shadow-sm">
+            <i class="bi bi-file-earmark-medical-fill"></i> بارگذاری رکورد جدید ECG
+        </a>
+    </div>
+</div>
+
+<!-- اطلاعات هویتی و سوابق پزشکی -->
+<div class="row g-4 mb-4">
+    <div class="col-md-4">
+        <div class="card h-100 shadow-sm">
+            <div class="card-body">
+                <h5 class="card-title text-primary mb-3"><i class="bi bi-info-circle"></i> اطلاعات هویتی</h5>
+                <ul class="list-unstyled mb-0">
+                    <li class="mb-2"><strong>سن:</strong> {{ patient.age }} سال</li>
+                    <li class="mb-2"><strong>جنسیت:</strong> {{ patient.get_gender_display }}</li>
+                    <li class="mb-2"><strong>کد ملی:</strong> <code>{{ patient.national_id }}</code></li>
+                    <li class="mb-2"><strong>شماره تماس:</strong> {{ patient.phone_number|default:"ثبت نشده" }}</li>
+                    <li class="mb-0"><strong>تاریخ تشکیل پرونده:</strong> {{ patient.created_at|date:"Y/m/d - H:i" }}</li>
+                </ul>
+            </div>
         </div>
     </div>
-
-    <div class="rd-card" style="margin-top: 1.5rem;">
-        <div class="rd-page-header">
-            <h2>رکوردهای ECG</h2>
-            <a href="{% url 'patients:ecg_create' patient.pk %}" class="rd-nav-button">ثبت رکورد جدید</a>
+    <div class="col-md-8">
+        <div class="card h-100 shadow-sm">
+            <div class="card-body">
+                <h5 class="card-title text-primary mb-3"><i class="bi bi-journal-medical"></i> سوابق پزشکی بیمار</h5>
+                <p class="card-text text-muted bg-light p-3 rounded-3 mb-0" style="min-height: 120px;">
+                    {{ patient.medical_history|default:"هیچ سابقه پزشکی خاصی ثبت نشده است."|linebreaks }}
+                </p>
+            </div>
         </div>
+    </div>
+</div>
 
-        <table class="table rd-table">
-            <thead>
-                <tr>
-                    <th>تاریخ ثبت</th>
-                    <th>فرکانس نمونه‌برداری</th>
-                    <th>BPM</th>
-                    <th>نوع آریتمی</th>
-                    <th>وضعیت سیگنال</th>
-                    <th>فایل</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for record in ecg_records %}
-                <tr>
-                    <td>{{ record.created_at|date:"Y/m/d H:i" }}</td>
-                    <td>{{ record.sampling_rate }}</td>
-                    <td>{{ record.bpm|default:"—" }}</td>
-                    <td>{{ record.arrhythmia_type|default:"—" }}</td>
-                    <td>
-                        <span class="rd-badge rd-badge--{{ record.signal_status|lower }}">
-                            {{ record.get_signal_status_display }}
-                        </span>
-                    </td>
-                    <td>
-                        {% if record.signal_file %}
-                            <a href="{{ record.signal_file.url }}" target="_blank">دانلود</a>
-                        {% else %}
-                            —
-                        {% endif %}
-                    </td>
-                </tr>
-                {% empty %}
-                <tr>
-                    <td colspan="6">برای این بیمار هنوز رکورد ECG ثبت نشده است.</td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+<!-- بخش رکوردهای ECG به همراه دکمه‌های عملیات رکورد در بالای جدول -->
+<div class="card shadow-sm mb-5">
+    <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+        <h5 class="mb-0 text-dark fw-bold">
+            <i class="bi bi-heart-pulse text-danger"></i> رکوردهای نوار قلب (ECG) ثبت شده
+        </h5>
+
+        <!-- دکمه‌های ویرایش و حذف رکورد در بالای بخش نوار قلب -->
+        {% if object.pk %}
+        <div>
+            <a href="{% url 'patients:ecg_update' object.pk %}" class="btn btn-outline-primary btn-sm me-2">
+                <i class="bi bi-pencil-square"></i> ویرایش رکورد
+            </a>
+            <a href="{% url 'patients:ecg_delete' object.pk %}" class="btn btn-outline-danger btn-sm">
+                <i class="bi bi-trash"></i> حذف رکورد
+            </a>
+        </div>
+        {% endif %}
     </div>
 
-    <div style="margin-top: 1.5rem;">
-        <a href="{% url 'patients:update' patient.pk %}" class="btn btn-primary">ویرایش</a>
-        <a href="{% url 'patients:list' %}" class="btn btn-secondary">بازگشت</a>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th class="py-3">شناسه رکورد</th>
+                        <th>فرکانس نمونه‌برداری</th>
+                        <th>ضربان قلب (BPM)</th>
+                        <th>نوع آریتمی تشخیص‌داده‌شده</th>
+                        <th>وضعیت سیگنال</th>
+                        <th>تاریخ بارگذاری</th>
+                        <th class="text-center">عملیات</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for record in ecg_records %}
+                    <tr>
+                        <td class="fw-bold">#{{ record.pk }}</td>
+                        <td>{{ record.sampling_rate }} Hz</td>
+                        <td>
+                            {% if record.bpm %}
+                                <span class="badge bg-danger text-light px-2 py-1">{{ record.bpm }} BPM</span>
+                            {% else %}
+                                <span class="text-muted">محاسبه نشده</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ record.arrhythmia_type }}</td>
+                        <td>
+                            {% if record.signal_status == 'NORMAL' %}
+                                <span class="badge bg-success">نرمال</span>
+                            {% elif record.signal_status == 'ARRHYTHMIA' %}
+                                <span class="badge bg-warning text-dark">آریتمی</span>
+                            {% elif record.signal_status == 'NOISE' %}
+                                <span class="badge bg-secondary">نویز شدید</span>
+                            {% else %}
+                                <span class="badge bg-info text-dark">در انتظار پردازش</span>
+                            {% endif %}
+                        </td>
+                        <td class="text-muted small">{{ record.created_at|date:"Y/m/d H:i" }}</td>
+                        <td class="text-center">
+                            <a href="{% url 'patients:ecg_update' record.pk %}" class="btn btn-outline-primary btn-sm" title="ویرایش">
+                                <i class="bi bi-pencil"></i>
+                            </a>
+                            <a href="{% url 'patients:ecg_delete' record.pk %}" class="btn btn-outline-danger btn-sm" title="حذف">
+                                <i class="bi bi-trash"></i>
+                            </a>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="7" class="text-center py-4 text-muted">
+                            <i class="bi bi-file-earmark-x display-6 d-block mb-2"></i>
+                            تا کنون هیچ فایل سیگنال ECG برای این بیمار بارگذاری نشده است.
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
     </div>
-</section>
+</div>
 {% endblock %}

@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+{% load crispy_forms_tags %}
+
+{% block title %}
+    {% if form.instance.pk %}ویرایش رکورد ECG{% else %}ثبت رکورد ECG جدید{% endif %} | RhythmDesk
+{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="form-page mx-auto">
+        <!-- دکمه بازگشت به صفحه جزئیات بیمار -->
+        {% if patient %}
+            <a class="back-link" href="{% url 'patients:detail' patient.pk %}">
+                ← بازگشت به پرونده بیمار
+            </a>
+        {% elif form.instance.patient %}
+            <a class="back-link" href="{% url 'patients:detail' form.instance.patient.pk %}">
+                ← بازگشت به پرونده بیمار
+            </a>
+        {% endif %}
+
+        <div class="card app-card mt-4">
+            <div class="card-body p-4 p-md-5">
+                <span class="eyebrow">مدیریت سیگنال‌های قلبی</span>
+
+                <h1 class="page-title mb-2">
+                    {% if form.instance.pk %}
+                        ویرایش رکورد ECG
+                    {% else %}
+                        ثبت رکورد ECG جدید
+                    {% endif %}
+                </h1>
+
+                {% if patient %}
+                    <p class="text-muted mb-4">
+                        بیمار: {{ patient.first_name }} {{ patient.last_name }}
+                        (کد ملی: {{ patient.national_id }})
+                    </p>
+                {% endif %}
+
+                <form method="post" enctype="multipart/form-data">
+                    {% csrf_token %}
+
+                    {% crispy form %}
+
+                    <button type="submit" class="btn btn-primary">
+                        {% if form.instance.pk %}
+                            ذخیره تغییرات
+                        {% else %}
+                            ثبت و تحلیل
+                        {% endif %}
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
