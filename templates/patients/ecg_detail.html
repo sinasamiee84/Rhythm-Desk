@@ -2,118 +2,140 @@
 {% block title %}رکورد ECG #{{ ecg_record.pk }} | کاردیوفلو{% endblock %}
 
 {% block content %}
-<div class="row mb-4 align-items-center">
-    <div class="col-md-8">
-        <nav aria-label="breadcrumb">
-            <ol class="breadcrumb mb-2">
-                <li class="breadcrumb-item"><a href="{% url 'patients:list' %}">لیست بیماران</a></li>
-                <li class="breadcrumb-item">
-                    <a href="{% url 'patients:detail' ecg_record.patient.pk %}">
-                        {{ ecg_record.patient.first_name }} {{ ecg_record.patient.last_name }}
-                    </a>
-                </li>
-                <li class="breadcrumb-item active" aria-current="page">رکورد #{{ ecg_record.pk }}</li>
-            </ol>
-        </nav>
-        <h2 class="fw-bold text-dark">
-            <i class="bi bi-heart-pulse text-danger"></i> جزئیات رکورد ECG #{{ ecg_record.pk }}
-        </h2>
-    </div>
-    <div class="col-md-4 text-md-end">
-        <a href="{% url 'patients:ecg_create' ecg_record.patient.pk %}" class="btn btn-success shadow-sm">
-            <i class="bi bi-cloud-arrow-up"></i> رکورد جدید
-        </a>
-        <a href="{% url 'patients:ecg_delete' ecg_record.pk %}" class="btn btn-outline-danger ms-1">
-            <i class="bi bi-trash"></i> حذف
-        </a>
-    </div>
-</div>
-
-<div class="row g-4 mb-4">
-    <!-- وضعیت تحلیل -->
-    <div class="col-md-4">
-        <div class="card h-100 shadow-sm">
-            <div class="card-body">
-                <h5 class="card-title text-primary mb-3">
-                    <i class="bi bi-activity"></i> وضعیت تحلیل
-                </h5>
-                <p class="mb-3">
-                    {% if ecg_record.signal_status == 'NORMAL' %}
-                        <span class="badge bg-success fs-6 px-3 py-2">نرمال</span>
-                    {% elif ecg_record.signal_status == 'ARRHYTHMIA' %}
-                        <span class="badge bg-warning text-dark fs-6 px-3 py-2">آریتمی</span>
-                    {% elif ecg_record.signal_status == 'NOISE' %}
-                        <span class="badge bg-secondary fs-6 px-3 py-2">نویز شدید / نامعتبر</span>
-                    {% else %}
-                        <span class="badge bg-info text-dark fs-6 px-3 py-2">در انتظار پردازش</span>
-                    {% endif %}
-                </p>
-                <ul class="list-unstyled mb-0">
-                    <li class="mb-2">
-                        <strong>ضربان قلب:</strong>
-                        {% if ecg_record.bpm %}
-                            <span class="badge bg-danger">{{ ecg_record.bpm }} BPM</span>
-                        {% else %}
-                            <span class="text-muted">محاسبه نشده</span>
-                        {% endif %}
+<div class="container py-4">
+    <!-- هدر و دکمه‌های عملیاتی -->
+    <div class="row mb-4 align-items-center">
+        <div class="col-md-8">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb mb-2">
+                    <li class="breadcrumb-item"><a href="{% url 'patients:list' %}">لیست بیماران</a></li>
+                    <li class="breadcrumb-item">
+                        <a href="{% url 'patients:detail' ecg_record.patient.pk %}">
+                            {{ ecg_record.patient.first_name }} {{ ecg_record.patient.last_name }}
+                        </a>
                     </li>
-                    <li class="mb-2">
-                        <strong>نوع آریتمی:</strong>
-                        {{ ecg_record.arrhythmia_type|default:"نامشخص" }}
-                    </li>
-                    <li class="mb-0">
-                        <strong>فرکانس نمونه‌برداری:</strong>
-                        {{ ecg_record.sampling_rate }} Hz
-                    </li>
-                </ul>
-            </div>
+                    <li class="breadcrumb-item active" aria-current="page">رکورد #{{ ecg_record.pk }}</li>
+                </ol>
+            </nav>
+            <h2 class="fw-bold text-dark">
+                <i class="bi bi-heart-pulse text-danger"></i> جزئیات رکورد ECG #{{ ecg_record.pk }}
+            </h2>
+        </div>
+        <div class="col-md-4 text-md-end mt-3 mt-md-0">
+            <a href="{% url 'patients:ecg_update' ecg_record.pk %}" class="btn btn-outline-primary shadow-sm me-1">
+                <i class="bi bi-pencil-square"></i> ویرایش
+            </a>
+            <a href="{% url 'patients:ecg_delete' ecg_record.pk %}" class="btn btn-outline-danger">
+                <i class="bi bi-trash"></i> حذف
+            </a>
         </div>
     </div>
 
-    <!-- مشخصات رکورد -->
-    <div class="col-md-8">
-        <div class="card h-100 shadow-sm">
-            <div class="card-body">
-                <h5 class="card-title text-primary mb-3">
-                    <i class="bi bi-file-earmark-medical"></i> مشخصات فایل و بیمار
-                </h5>
-                <div class="table-responsive">
-                    <table class="table table-sm align-middle mb-0">
-                        <tbody>
-                            <tr>
-                                <th class="text-muted" style="width: 40%;">بیمار</th>
-                                <td>
-                                    <a href="{% url 'patients:detail' ecg_record.patient.pk %}" class="text-decoration-none">
-                                        {{ ecg_record.patient.first_name }} {{ ecg_record.patient.last_name }}
-                                    </a>
-                                </td>
-                            </tr>
-                            <tr>
-                                <th class="text-muted">کد ملی بیمار</th>
-                                <td><code>{{ ecg_record.patient.national_id }}</code></td>
-                            </tr>
-                            <tr>
-                                <th class="text-muted">تاریخ ثبت رکورد</th>
-                                <td>{{ ecg_record.created_at|date:"Y/m/d - H:i" }}</td>
-                            </tr>
-                            <tr>
-                                <th class="text-muted">فایل سیگنال</th>
-                                <td>
-                                    {% if ecg_record.signal_file %}
-                                        <a href="{{ ecg_record.signal_file.url }}" class="btn btn-outline-primary btn-sm" download>
-                                            <i class="bi bi-download"></i> دانلود فایل CSV
+    <!-- ستون‌های وضعیت و مشخصات -->
+    <div class="row g-4 mb-4">
+        <!-- وضعیت تحلیل -->
+        <div class="col-md-4">
+            <div class="card h-100 shadow-sm border-0">
+                <div class="card-body">
+                    <h5 class="card-title text-primary mb-3">
+                        <i class="bi bi-activity"></i> وضعیت تحلیل
+                    </h5>
+                    <p class="mb-3">
+                        {% if ecg_record.signal_status == 'NORMAL' %}
+                            <span class="badge bg-success fs-6 px-3 py-2">نرمال</span>
+                        {% elif ecg_record.signal_status == 'ARRHYTHMIA' %}
+                            <span class="badge bg-warning text-dark fs-6 px-3 py-2">آریتمی</span>
+                        {% elif ecg_record.signal_status == 'NOISE' %}
+                            <span class="badge bg-secondary fs-6 px-3 py-2">نویز شدید / نامعتبر</span>
+                        {% else %}
+                            <span class="badge bg-info text-dark fs-6 px-3 py-2">در انتظار پردازش</span>
+                        {% endif %}
+                    </p>
+                    <ul class="list-unstyled mb-0">
+                        <li class="mb-2">
+                            <strong>ضربان قلب:</strong>
+                            {% if ecg_record.bpm %}
+                                <span class="badge bg-danger">{{ ecg_record.bpm }} BPM</span>
+                            {% else %}
+                                <span class="text-muted">محاسبه نشده</span>
+                            {% endif %}
+                        </li>
+                        <li class="mb-2">
+                            <strong>نوع آریتمی:</strong>
+                            {{ ecg_record.arrhythmia_type|default:"نامشخص" }}
+                        </li>
+                        <li class="mb-0">
+                            <strong>فرکانس نمونه‌برداری:</strong>
+                            {{ ecg_record.sampling_rate }} Hz
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- مشخصات فایل و بیمار -->
+        <div class="col-md-8">
+            <div class="card h-100 shadow-sm border-0">
+                <div class="card-body">
+                    <h5 class="card-title text-primary mb-3">
+                        <i class="bi bi-file-earmark-medical"></i> مشخصات فایل و بیمار
+                    </h5>
+                    <div class="table-responsive">
+                        <table class="table table-sm align-middle mb-0">
+                            <tbody>
+                                <tr>
+                                    <th class="text-muted" style="width: 40%;">بیمار</th>
+                                    <td>
+                                        <a href="{% url 'patients:detail' ecg_record.patient.pk %}" class="text-decoration-none">
+                                            {{ ecg_record.patient.first_name }} {{ ecg_record.patient.last_name }}
                                         </a>
-                                        <div class="small text-muted mt-1">{{ ecg_record.signal_file.name }}</div>
-                                    {% else %}
-                                        <span class="text-muted">فایلی ثبت نشده است.</span>
-                                    {% endif %}
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <th class="text-muted">کد ملی بیمار</th>
+                                    <td><code>{{ ecg_record.patient.national_id }}</code></td>
+                                </tr>
+                                <tr>
+                                    <th class="text-muted">تاریخ ثبت رکورد</th>
+                                    <td>{{ ecg_record.created_at|date:"Y/m/d - H:i" }}</td>
+                                </tr>
+                                <tr>
+                                    <th class="text-muted">فایل سیگنال</th>
+                                    <td>
+                                        {% if ecg_record.signal_file %}
+                                            <a href="{{ ecg_record.signal_file.url }}" class="btn btn-outline-primary btn-sm" download>
+                                                <i class="bi bi-download"></i> دانلود فایل CSV
+                                            </a>
+                                            <div class="small text-muted mt-1">{{ ecg_record.signal_file.name }}</div>
+                                        {% else %}
+                                            <span class="text-muted">فایلی ثبت نشده است.</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
+
+    <!-- نمودار سیگنال فیلترشده و پیک‌های R -->
+    {% if ecg_record.plot_base64 %}
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card shadow-sm border-0">
+                <div class="card-body text-center p-4">
+                    <h5 class="card-title text-primary mb-3">
+                        <i class="bi bi-graph-up"></i> نمودار سیگنال فیلترشده و پیک‌های R
+                    </h5>
+                    <div class="overflow-auto">
+                        <img src="data:image/png;base64,{{ ecg_record.plot_base64 }}" class="img-fluid rounded border" alt="ECG Plot">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
 </div>
 {% endblock %}

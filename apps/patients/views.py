@@ -95,7 +95,6 @@ class CreateECGRecordView(LoginRequiredMixin, CreateView):
     template_name = "patients/ecg_form.html"
 
     def dispatch(self, request, *args, **kwargs):
-        # بیمار باید متعلق به پزشک واردشده باشد.
         self.patient = Patient.objects.filter(
             pk=self.kwargs["patient_pk"],
             doctor=request.user,
@@ -111,13 +110,11 @@ class CreateECGRecordView(LoginRequiredMixin, CreateView):
         return super().dispatch(request, *args, **kwargs)
 
     def form_valid(self, form):
-        # ابتدا رکورد و فایل را ذخیره می‌کنیم.
         record = form.save(commit=False)
         record.patient = self.patient
         record.save()
 
         try:
-            # FieldFile را مستقیم می‌دهیم؛ سرویس فایل را از ابتدا می‌خواند.
             result = analyze_ecg(
                 record.signal_file,
                 record.sampling_rate,
@@ -127,12 +124,14 @@ class CreateECGRecordView(LoginRequiredMixin, CreateView):
                 record.bpm = result.get("bpm")
                 record.arrhythmia_type = result.get("arrhythmia_type") or "نامشخص"
                 record.signal_status = result.get("status", "PENDING")
+                record.plot_base64 = result.get("plot_base64") or ""
 
                 record.save(
                     update_fields=[
                         "bpm",
                         "arrhythmia_type",
                         "signal_status",
+                        "plot_base64",
                     ]
                 )
 
@@ -141,13 +140,15 @@ class CreateECGRecordView(LoginRequiredMixin, CreateView):
             else:
                 record.signal_status = ECGRecord.SignalStatus.NOISE
                 record.arrhythmia_type = (
-                        result.get("arrhythmia_type") or "تحلیل سیگنال ناموفق بود."
+                    result.get("arrhythmia_type") or "تحلیل سیگنال ناموفق بود."
                 )
+                record.plot_base64 = ""
 
                 record.save(
                     update_fields=[
                         "signal_status",
                         "arrhythmia_type",
+                        "plot_base64",
                     ]
                 )
 
@@ -157,28 +158,29 @@ class CreateECGRecordView(LoginRequiredMixin, CreateView):
                 )
 
         except Exception:
-            # این خط علت واقعی خطا را در ترمینالی که runserver اجرا شده ثبت می‌کند.
             logger.exception("ECG analysis failed for record %s", record.pk)
 
             record.signal_status = ECGRecord.SignalStatus.NOISE
             record.arrhythmia_type = "خطا در پردازش سیگنال"
+            record.plot_base64 = ""
             record.save(
                 update_fields=[
                     "signal_status",
                     "arrhythmia_type",
+                    "plot_base64",
                 ]
             )
 
             messages.warning(
                 self.request,
-                "رکورد ذخیره شد، اما تحلیل خطا داد. جزئیات خطا در ترمینال سرور ثبت شده است.",
+                "رکورد ذخیره شد، اما تحلیل خطا داد.",
             )
 
         self.object = record
         return redirect(self.get_success_url())
 
     def get_success_url(self):
-        return self.patient.get_absolute_url()
+        return reverse_lazy("patients:ecg_detail", kwargs={"pk": self.object.pk})
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -216,12 +218,10 @@ class ECGRecordUpdateView(ECGRecordOwnerMixin, UpdateView):
         )
 
     def form_valid(self, form):
-        # ذخیره تغییرات رکورد و فایل جدید (در صورت آپلود)
         record = form.save(commit=False)
         record.save()
 
         try:
-            # تحلیل مجدد سیگنال با فایل جدید یا موجود
             result = analyze_ecg(
                 record.signal_file,
                 record.sampling_rate,
@@ -231,12 +231,14 @@ class ECGRecordUpdateView(ECGRecordOwnerMixin, UpdateView):
                 record.bpm = result.get("bpm")
                 record.arrhythmia_type = result.get("arrhythmia_type") or "نامشخص"
                 record.signal_status = result.get("status", "PENDING")
+                record.plot_base64 = result.get("plot_base64") or ""
 
                 record.save(
                     update_fields=[
                         "bpm",
                         "arrhythmia_type",
                         "signal_status",
+                        "plot_base64",
                     ]
                 )
 
@@ -247,11 +249,13 @@ class ECGRecordUpdateView(ECGRecordOwnerMixin, UpdateView):
                 record.arrhythmia_type = (
                     result.get("arrhythmia_type") or "تحلیل سیگنال ناموفق بود."
                 )
+                record.plot_base64 = ""
 
                 record.save(
                     update_fields=[
                         "signal_status",
                         "arrhythmia_type",
+                        "plot_base64",
                     ]
                 )
 
@@ -265,10 +269,12 @@ class ECGRecordUpdateView(ECGRecordOwnerMixin, UpdateView):
 
             record.signal_status = ECGRecord.SignalStatus.NOISE
             record.arrhythmia_type = "خطا در پردازش سیگنال"
+            record.plot_base64 = ""
             record.save(
                 update_fields=[
                     "signal_status",
                     "arrhythmia_type",
+                    "plot_base64",
                 ]
             )
 
@@ -279,4 +285,3 @@ class ECGRecordUpdateView(ECGRecordOwnerMixin, UpdateView):
 
         self.object = record
         return redirect(self.get_success_url())
-

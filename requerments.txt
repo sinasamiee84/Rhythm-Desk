@@ -1,12 +1,10 @@
 django>=5.0
 django-unfold
 pillow
-# برای فرم‌های زیبا و تمیز (Bootstrap 5)
 django-crispy-forms
 crispy-bootstrap5
-# برای پردازش فایل‌های CSV (نوار قلب)
-pandas
-# برای امنیت (مخفی کردن SECRET_KEY و...)
 python-dotenv
-# برای ساخت API
 djangorestframework
+pandas>=2.0.0
+scipy>=1.10.0
+matplotlib>=3.7.0

@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-{% block title %}پرونده {{ patient }} | کاردیوفلو{% endblock %}
+{% block title %}پرونده {{ patient.first_name }} {{ patient.last_name }} | کاردیوفلو{% endblock %}
 
 {% block content %}
 <!-- هدر صفحه -->
@@ -11,15 +11,17 @@
                 <li class="breadcrumb-item active" aria-current="page">پرونده بیمار</li>
             </ol>
         </nav>
-        <h2 class="fw-bold text-dark"><i class="bi bi-person-badge"></i> {{ patient.first_name }} {{ patient.last_name }}</h2>
+        <h2 class="fw-bold text-dark">
+            <i class="bi bi-person-badge"></i> {{ patient.first_name }} {{ patient.last_name }}
+        </h2>
     </div>
 
     <div class="col-md-4 text-md-end">
         <a href="{% url 'patients:update' patient.pk %}" class="btn btn-outline-primary shadow-sm mb-2 mb-md-0">
-            <i class="bi bi-pencil-square"></i> ویرایش پرونده و سوابق
+            <i class="bi bi-pencil-square"></i> ویرایش پرونده
         </a>
-        <a href="{% url 'patients:ecg_create' patient.pk %}" class="btn btn-success shadow-sm">
-            <i class="bi bi-file-earmark-medical-fill"></i> بارگذاری رکورد جدید ECG
+        <a href="{% url 'patients:list' %}" class="btn btn-outline-secondary shadow-sm">
+            <i class="bi bi-arrow-right"></i> بازگشت به لیست
         </a>
     </div>
 </div>
@@ -27,9 +29,11 @@
 <!-- اطلاعات هویتی و سوابق پزشکی -->
 <div class="row g-4 mb-4">
     <div class="col-md-4">
-        <div class="card h-100 shadow-sm">
+        <div class="card h-100 shadow-sm border-0">
             <div class="card-body">
-                <h5 class="card-title text-primary mb-3"><i class="bi bi-info-circle"></i> اطلاعات هویتی</h5>
+                <h5 class="card-title text-primary mb-3">
+                    <i class="bi bi-info-circle"></i> اطلاعات هویتی
+                </h5>
                 <ul class="list-unstyled mb-0">
                     <li class="mb-2"><strong>سن:</strong> {{ patient.age }} سال</li>
                     <li class="mb-2"><strong>جنسیت:</strong> {{ patient.get_gender_display }}</li>
@@ -41,9 +45,11 @@
         </div>
     </div>
     <div class="col-md-8">
-        <div class="card h-100 shadow-sm">
+        <div class="card h-100 shadow-sm border-0">
             <div class="card-body">
-                <h5 class="card-title text-primary mb-3"><i class="bi bi-journal-medical"></i> سوابق پزشکی بیمار</h5>
+                <h5 class="card-title text-primary mb-3">
+                    <i class="bi bi-journal-medical"></i> سوابق پزشکی بیمار
+                </h5>
                 <p class="card-text text-muted bg-light p-3 rounded-3 mb-0" style="min-height: 120px;">
                     {{ patient.medical_history|default:"هیچ سابقه پزشکی خاصی ثبت نشده است."|linebreaks }}
                 </p>
@@ -52,24 +58,16 @@
     </div>
 </div>
 
-<!-- بخش رکوردهای ECG به همراه دکمه‌های عملیات رکورد در بالای جدول -->
-<div class="card shadow-sm mb-5">
+<!-- بخش رکوردهای ECG -->
+<div class="card shadow-sm border-0 mb-5">
     <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
         <h5 class="mb-0 text-dark fw-bold">
             <i class="bi bi-heart-pulse text-danger"></i> رکوردهای نوار قلب (ECG) ثبت شده
         </h5>
-
-        <!-- دکمه‌های ویرایش و حذف رکورد در بالای بخش نوار قلب -->
-        {% if object.pk %}
-        <div>
-            <a href="{% url 'patients:ecg_update' object.pk %}" class="btn btn-outline-primary btn-sm me-2">
-                <i class="bi bi-pencil-square"></i> ویرایش رکورد
-            </a>
-            <a href="{% url 'patients:ecg_delete' object.pk %}" class="btn btn-outline-danger btn-sm">
-                <i class="bi bi-trash"></i> حذف رکورد
-            </a>
-        </div>
-        {% endif %}
+        <!-- اگر دکمه ثبت رکورد جدید ECG را هم خواستید در این مسیر قرار دهید -->
+        <!-- <a href="{% url 'patients:ecg_create' patient.pk %}" class="btn btn-success btn-sm">
+            <i class="bi bi-file-earmark-medical-fill"></i> بارگذاری رکورد جدید
+        </a> -->
     </div>
 
     <div class="card-body p-0">
@@ -98,7 +96,7 @@
                                 <span class="text-muted">محاسبه نشده</span>
                             {% endif %}
                         </td>
-                        <td>{{ record.arrhythmia_type }}</td>
+                        <td>{{ record.arrhythmia_type|default:"نامشخص" }}</td>
                         <td>
                             {% if record.signal_status == 'NORMAL' %}
                                 <span class="badge bg-success">نرمال</span>
@@ -112,7 +110,11 @@
                         </td>
                         <td class="text-muted small">{{ record.created_at|date:"Y/m/d H:i" }}</td>
                         <td class="text-center">
-                            <a href="{% url 'patients:ecg_update' record.pk %}" class="btn btn-outline-primary btn-sm" title="ویرایش">
+                            <!-- دکمهٔ جزئیات و نمودار رکورد -->
+                            <a href="{% url 'patients:ecg_detail' record.pk %}" class="btn btn-outline-info btn-sm me-1" title="مشاهده جزئیات و نمودار">
+                                <i class="bi bi-eye"></i>
+                            </a>
+                            <a href="{% url 'patients:ecg_update' record.pk %}" class="btn btn-outline-primary btn-sm me-1" title="ویرایش">
                                 <i class="bi bi-pencil"></i>
                             </a>
                             <a href="{% url 'patients:ecg_delete' record.pk %}" class="btn btn-outline-danger btn-sm" title="حذف">

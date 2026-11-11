@@ -1,7 +1,14 @@
+import io
+import base64
 import os
-
 import numpy as np
 import pandas as pd
+from scipy.signal import find_peaks, butter, filtfilt
+import matplotlib
+
+matplotlib.use('Agg')
+import matplotlib.pyplot as plt
+from matplotlib.ticker import AutoMinorLocator
 
 
 def _reset_file(file_obj):
@@ -13,247 +20,208 @@ def _reset_file(file_obj):
             pass
 
 
-def _read_ecg_file(file_obj):
+def bandpass_filter(signal, fs, lowcut=0.5, highcut=40.0, order=2):
+    """فیلتر میان‌گذر برای حذف نویز Baseline Wander و نویز فرکانس بالا"""
+    nyq = 0.5 * fs
+    low = max(lowcut / nyq, 0.0001)
+    high = min(highcut / nyq, 0.99)
+    if low >= high:
+        low = high * 0.1
+    b, a = butter(order, [low, high], btype='band')
+    return filtfilt(b, a, signal)
+
+
+def analyze_ecg(file_obj, sampling_rate=250):
     """
-    خواندن CSV/TXT و استخراج یک ستون عددی از سیگنال.
-
-    file_obj می‌تواند یکی از این‌ها باشد:
-    - مسیر فایل به شکل str یا Path
-    - فایل بازشده
-    - فیلد فایل Django مثل record.signal_file
+    تابع جامع تحلیل ECG سازگار با ویوهای پروژه RhythmDesk
     """
-
-    # تبدیل FieldFile جنگو به مسیر یا فایل بازشده
-    if hasattr(file_obj, "path") and not isinstance(file_obj, (str, bytes, os.PathLike)):
-        try:
-            file_obj = file_obj.path
-        except (ValueError, NotImplementedError):
-            # در بعضی storageها path وجود ندارد؛ از خود فایل استفاده می‌کنیم
-            file_obj.open("rb")
-            file_obj = file_obj.file
-
-    _reset_file(file_obj)
-
-    # ابتدا فایل را به‌صورت CSV با جداکنندهٔ خودکار می‌خوانیم.
-    # این کار برای comma، semicolon و tab مناسب است.
     try:
-        df = pd.read_csv(
-            file_obj,
-            sep=None,
-            engine="python",
-            comment="#",
-        )
-    except Exception:
+        # ۱. تبدیل و اعتبارسنجی نرخ نمونه‌برداری
+        try:
+            actual_fs = int(round(float(sampling_rate)))
+            if actual_fs <= 0:
+                actual_fs = 250
+        except (ValueError, TypeError):
+            actual_fs = 250
+
+        # تبدیل FieldFile جنگو به مسیر یا فایل بازشده
+        if hasattr(file_obj, "path") and not isinstance(file_obj, (str, bytes, os.PathLike)):
+            try:
+                file_obj = file_obj.path
+            except (ValueError, NotImplementedError):
+                file_obj.open("rb")
+                file_obj = file_obj.file
+
         _reset_file(file_obj)
-        df = pd.read_csv(
-            file_obj,
-            sep=None,
-            engine="python",
-            header=None,
-            comment="#",
-        )
 
-    # تبدیل ستون‌ها به عدد؛ متن‌ها به NaN تبدیل می‌شوند.
-    numeric_df = df.apply(pd.to_numeric, errors="coerce")
+        # ۲. خواندن فایل CSV یا TXT
+        try:
+            df = pd.read_csv(file_obj, sep=None, engine='python', comment='#')
+        except Exception:
+            _reset_file(file_obj)
+            df = pd.read_csv(file_obj, sep=None, engine='python', header=None, comment='#')
 
-    # ستون‌هایی که دست‌کم یک مقدار عددی دارند
-    numeric_cols = [
-        col for col in numeric_df.columns
-        if numeric_df[col].notna().any()
-    ]
-
-    # اگر CSV با header خوانده شده ولی داده‌ها همگی زیر عنوان افتاده‌اند،
-    # دوباره بدون header می‌خوانیم.
-    if not numeric_cols:
-        _reset_file(file_obj)
-        df = pd.read_csv(
-            file_obj,
-            sep=None,
-            engine="python",
-            header=None,
-            comment="#",
-        )
         numeric_df = df.apply(pd.to_numeric, errors="coerce")
         numeric_cols = [
             col for col in numeric_df.columns
             if numeric_df[col].notna().any()
         ]
 
-    if not numeric_cols:
-        raise ValueError(
-            "هیچ دادهٔ عددی در فایل پیدا نشد. فایل باید CSV یا TXT و دارای سیگنال عددی باشد."
-        )
+        if not numeric_cols:
+            _reset_file(file_obj)
+            df = pd.read_csv(file_obj, sep=None, engine='python', header=None, comment='#')
+            numeric_df = df.apply(pd.to_numeric, errors="coerce")
+            numeric_cols = [
+                col for col in numeric_df.columns
+                if numeric_df[col].notna().any()
+            ]
 
-    # اگر نام ستون به سیگنال ECG اشاره کند، همان ستون را انتخاب می‌کنیم.
-    preferred_words = ("ecg", "signal", "mv", "voltage", "amplitude")
-    signal_col = next(
-        (
-            col for col in numeric_cols
-            if any(word in str(col).lower() for word in preferred_words)
-        ),
-        numeric_cols[0],
-    )
-
-    signal = numeric_df[signal_col].to_numpy(dtype=float)
-    signal = signal[np.isfinite(signal)]
-
-    if signal.size == 0:
-        raise ValueError("ستون انتخاب‌شده هیچ نمونهٔ عددی معتبری ندارد.")
-
-    return signal
-
-
-def filter_signal(signal, sampling_rate):
-    """
-    حذف میانگین و کاهش نویز ساده.
-
-    توجه: این فیلتر یک فیلتر تشخیصیِ بالینی نیست؛ برای پردازش مقدماتی است.
-    """
-    signal = np.asarray(signal, dtype=float)
-
-    if signal.ndim != 1 or signal.size < 3:
-        raise ValueError("سیگنال باید حداقل سه نمونهٔ عددی داشته باشد.")
-
-    if not np.all(np.isfinite(signal)):
-        signal = signal[np.isfinite(signal)]
-
-    if signal.size < 3:
-        raise ValueError("نمونه‌های معتبر سیگنال کافی نیستند.")
-
-    # حذف بایاس DC
-    filtered = signal - np.mean(signal)
-
-    # میانگین‌گیری کوتاه؛ اندازهٔ پنجره حداکثر برابر طول سیگنال است.
-    window = max(1, int(round(sampling_rate / 100)))
-    window = min(window, filtered.size)
-
-    kernel = np.ones(window, dtype=float) / window
-    return np.convolve(filtered, kernel, mode="same")
-
-
-def detect_r_peaks(signal, sampling_rate):
-    """
-    تشخیص مقدماتی پیک‌های R با آستانهٔ نسبی و فاصلهٔ حداقلی.
-
-    برای کاربرد پزشکی واقعی باید الگوریتم با دادهٔ معتبر ارزیابی شود.
-    """
-    signal = np.asarray(signal, dtype=float)
-
-    if signal.ndim != 1 or signal.size < 3:
-        return []
-
-    max_amplitude = float(np.max(np.abs(signal)))
-    if not np.isfinite(max_amplitude) or max_amplitude == 0:
-        return []
-
-    # آستانهٔ نسبی بر اساس دامنهٔ سیگنال
-    threshold = 0.6 * max_amplitude
-
-    # فاصلهٔ حداقلی 200 میلی‌ثانیه بین پیک‌ها
-    min_distance = max(1, int(round(0.2 * sampling_rate)))
-
-    peaks = []
-
-    for i in range(1, signal.size - 1):
-        is_peak = (
-            signal[i] > threshold
-            and signal[i] >= signal[i - 1]
-            and signal[i] >= signal[i + 1]
-        )
-
-        if not is_peak:
-            continue
-
-        if peaks and i - peaks[-1] < min_distance:
-            # اگر دو پیک خیلی نزدیک باشند، پیک بلندتر نگه داشته می‌شود.
-            if signal[i] > signal[peaks[-1]]:
-                peaks[-1] = i
-        else:
-            peaks.append(i)
-
-    return peaks
-
-
-def analyze_ecg(file_obj, sampling_rate):
-    """
-    تحلیل مقدماتی فایل ECG.
-
-    خروجی موفق:
-    {
-        "success": True,
-        "bpm": عدد,
-        "status": "NORMAL" یا "ARRHYTHMIA",
-        "arrhythmia_type": متن
-    }
-
-    خروجی ناموفق شامل success=False و error است.
-    """
-
-    try:
-        sampling_rate = float(sampling_rate)
-
-        if not np.isfinite(sampling_rate) or sampling_rate <= 0:
-            raise ValueError(
-                "نرخ نمونه‌برداری باید عددی و بزرگ‌تر از صفر باشد؛ مثلاً 250."
-            )
-
-        signal = _read_ecg_file(file_obj)
-
-        # حداقل یک ثانیه سیگنال برای ادامهٔ تحلیل
-        if signal.size < sampling_rate:
+        if not numeric_cols:
             return {
                 "success": False,
-                "error": "مدت سیگنال کمتر از یک ثانیه است؛ دادهٔ بیشتری لازم است.",
+                "error": "هیچ ستون عددی معتبری در فایل پیدا نشد.",
+                "bpm": None,
+                "status": "NOISE",
+                "arrhythmia_type": "فایل فاقد داده عددی",
+            }
+
+        # ۳. تشخیص هوشمند ستون سیگنال
+        signal_col = None
+        preferred_words = ('ecg', 'signal', 'mv', 'volt', 'amplitude', 'lead', 'سیگنال')
+
+        for col in numeric_cols:
+            if any(w in str(col).lower() for w in preferred_words):
+                signal_col = col
+                break
+
+        if signal_col is None:
+            signal_col = numeric_cols[0]
+
+        signal = numeric_df[signal_col].to_numpy(dtype=float)
+        signal = signal[np.isfinite(signal)]
+
+        if signal.size < actual_fs:
+            return {
+                "success": False,
+                "error": "داده سیگنال برای تحلیل کمتر از یک ثانیه است.",
                 "bpm": None,
                 "status": "NOISE",
                 "arrhythmia_type": "داده ناکافی",
             }
 
-        filtered = filter_signal(signal, sampling_rate)
-        peaks = detect_r_peaks(filtered, sampling_rate)
+        # ۴. فیلتر کردن سیگنال
+        try:
+            clean_segment = bandpass_filter(signal, fs=actual_fs, lowcut=0.5, highcut=40.0)
+        except Exception:
+            clean_segment = signal - np.mean(signal)
+
+        time = np.arange(len(clean_segment)) / actual_fs
+
+        # ۵. تشخیص دقیق پیک‌های R
+        min_distance = max(int(0.35 * actual_fs), 1)
+        q75, q25 = np.percentile(clean_segment, [75, 25])
+        iqr = q75 - q25
+        height_threshold = np.median(clean_segment) + 1.1 * iqr
+        prominence_threshold = max(0.1 * np.ptp(clean_segment), 0.25 * np.std(clean_segment))
+
+        peaks, _ = find_peaks(
+            clean_segment,
+            distance=min_distance,
+            height=height_threshold,
+            prominence=prominence_threshold
+        )
+
+        if len(peaks) < 2:
+            peaks, _ = find_peaks(
+                clean_segment,
+                distance=min_distance,
+                prominence=prominence_threshold
+            )
 
         if len(peaks) < 2:
             return {
                 "success": False,
-                "error": "کمتر از دو پیک R پیدا شد؛ محاسبهٔ ضربان ممکن نیست.",
+                "error": f"تعداد پیک‌های کافی با نرخ {actual_fs} Hz پیدا نشد.",
                 "bpm": None,
                 "status": "NOISE",
                 "arrhythmia_type": "پیک‌های کافی پیدا نشد",
             }
 
-        # فاصلهٔ پیک‌های متوالی، بر حسب ثانیه
-        rr_intervals = np.diff(peaks).astype(float) / sampling_rate
-        rr_intervals = rr_intervals[
-            np.isfinite(rr_intervals) & (rr_intervals > 0)
-        ]
+        # ۶. محاسبه فواصل و ضربان قلب
+        rr_intervals = np.diff(peaks) / actual_fs
+        rr_intervals = rr_intervals[np.isfinite(rr_intervals) & (rr_intervals > 0)]
 
         if rr_intervals.size == 0:
-            raise ValueError("فاصلهٔ معتبر بین پیک‌های R پیدا نشد.")
+            raise ValueError("فاصله معتبر بین پیک‌های R پیدا نشد.")
 
-        mean_rr = float(np.mean(rr_intervals))
-        bpm = int(round(60.0 / mean_rr))
+        avg_hr = float(60.0 / np.mean(rr_intervals))
+        bpm = int(round(avg_hr))
 
+        # ۷. تعیین وضعیت آریتمی سازگار با مدل دیتابیس (NORMAL یا ARRHYTHMIA)
+        arrhythmias = []
         if 60 <= bpm <= 100:
             status = "NORMAL"
-            arrhythmia_type = "نرمال"
+            arrhythmias.append("ریتم نرمال سینوسی (Normal Sinus Rhythm)")
         elif bpm > 100:
             status = "ARRHYTHMIA"
-            arrhythmia_type = "تاکیکاردی (ضربان زیاد)"
+            arrhythmias.append("تاکی‌کاردی (Tachycardia - ضربان بالا)")
         else:
             status = "ARRHYTHMIA"
-            arrhythmia_type = "برادیکاردی (ضربان کم)"
+            arrhythmias.append("برادی‌کاردی (Bradycardia - ضربان پایین)")
+
+        rr_cv = float(np.std(rr_intervals) / np.mean(rr_intervals)) if np.mean(rr_intervals) > 0 else 0
+        if rr_cv > 0.09:
+            arrhythmia_type = f"{arrhythmias[0]} | بی‌نظمی فواصل (Irregular RR)"
+        else:
+            arrhythmia_type = arrhythmias[0]
+
+        # ۸. رسم نمودار استاندارد نوار قلب (جهت نمایش در صفحه جزئیات در صورت نیاز)
+        fig, ax = plt.subplots(figsize=(11, 4), dpi=120)
+        fig.patch.set_facecolor('#ffffff')
+        ax.set_facecolor('#fffbfc')
+
+        ax.xaxis.set_minor_locator(AutoMinorLocator(5))
+        ax.yaxis.set_minor_locator(AutoMinorLocator(5))
+        ax.grid(which='major', color='#f5a9b8', linestyle='-', linewidth=0.8, alpha=0.8)
+        ax.grid(which='minor', color='#fce4ec', linestyle=':', linewidth=0.5, alpha=0.9)
+
+        ax.plot(time, clean_segment, label="Filtered ECG", color="#004d40", linewidth=1.3, zorder=3)
+        ax.scatter(time[peaks], clean_segment[peaks], color="#d32f2f", s=35, edgecolors='black', linewidth=0.5,
+                   label=f"R-peaks ({len(peaks)})", zorder=4)
+
+        ax.set_title(f"ECG Analysis | FS: {actual_fs} Hz | BPM: {bpm}", fontsize=11, fontweight='bold', pad=10,
+                     color='#212121')
+        ax.set_xlabel("Time (seconds)", fontsize=9)
+        ax.set_ylabel("Amplitude (mV)", fontsize=9)
+        ax.set_xlim(0, max(time) if len(time) > 0 else 1)
+
+        for spine in ax.spines.values():
+            spine.set_color('#757575')
+            spine.set_linewidth(0.8)
+
+        ax.legend(loc="upper right", frameon=True, facecolor='white', framealpha=0.9, fontsize=8)
+        fig.tight_layout()
+
+        buffer = io.BytesIO()
+        fig.savefig(buffer, format='png', bbox_inches='tight')
+        plt.close(fig)
+        buffer.seek(0)
+        image_base64 = base64.b64encode(buffer.getvalue()).decode('utf-8')
 
         return {
             "success": True,
             "bpm": bpm,
             "status": status,
             "arrhythmia_type": arrhythmia_type,
+            "plot_base64": image_base64,
+            "num_peaks": len(peaks),
         }
 
     except Exception as exc:
+        plt.close('all')
         return {
             "success": False,
-            "error": f"خطا در تحلیل فایل: {exc}",
+            "error": f"خطا در پردازش سیگنال: {exc}",
             "bpm": None,
             "status": "NOISE",
             "arrhythmia_type": "تحلیل ناموفق",

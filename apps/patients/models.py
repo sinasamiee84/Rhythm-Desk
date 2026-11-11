@@ -90,6 +90,14 @@ class ECGRecord(models.Model):
         default=SignalStatus.PENDING,
     )
 
+    # ذخیره تصویر نمودار به‌صورت Base64 (برای نمایش در صفحه جزئیات)
+    plot_base64 = models.TextField(
+        "تصویر نمودار سیگنال (Base64)",
+        blank=True,
+        default="",
+        help_text="تصویر PNG نمودار ECG به‌صورت رشته Base64.",
+    )
+
     created_at = models.DateTimeField("تاریخ ثبت رکورد", auto_now_add=True)
 
     class Meta:
