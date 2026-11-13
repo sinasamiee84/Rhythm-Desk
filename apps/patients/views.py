@@ -1,3 +1,5 @@
+from multiprocessing import context
+
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.shortcuts import redirect
@@ -14,6 +16,7 @@ from apps.patients.models import Patient, ECGRecord
 from apps.patients.services import analyze_ecg
 from .forms import PatientForm, ECGRecordForm
 from logging import getLogger
+from django.db.models import Q
 logger = getLogger(__name__)
 
 class PatientOwnerMixin(LoginRequiredMixin, UserPassesTestMixin):
@@ -30,12 +33,33 @@ class PatientListView(LoginRequiredMixin, ListView):
     template_name = "patients/list.html"
 
     def get_queryset(self):
-        return (
+        queryset = (
             Patient.objects
             .filter(doctor=self.request.user)
             .prefetch_related("ecg_records")
         )
+        search_query = self.request.GET.get("q",'').strip()
 
+        first_name = self.request.GET.get("first_name","")
+        last_name = self.request.GET.get("last_name","")
+        national_id = self.request.GET.get("national_id","")
+        if search_query:
+            queryset = queryset.filter(
+                Q(first_name__icontains=search_query) |
+                Q(last_name__icontains=search_query) |
+                Q(national_id__icontains=search_query)
+            )
+        if first_name:
+            queryset = queryset.filter(first_name__icontains=first_name)
+        if last_name:
+            queryset = queryset.filter(last_name__icontains=last_name)
+        if national_id:
+            queryset = queryset.filter(national_id__icontains=national_id)
+        return queryset
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['search_query'] = self.request.GET.get("q",'')
+        return context
 
 class PatientDetailView(PatientOwnerMixin, DetailView):
     model = Patient
