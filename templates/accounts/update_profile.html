@@ -3,78 +3,218 @@
 {% block title %}پروفایل پزشک | کاردیوفلو{% endblock %}
 
 {% block content %}
-<section class="rd-container auth-layout py-4">
-    <div class="auth-card shadow-sm border-0 p-4 p-md-5 bg-white rounded-4 w-100" style="max-width: 750px; margin: 0 auto;">
+<style>
+    /* استایل‌های مدرن برای اینپوت‌ها و فیلدهای فرم */
+    .profile-card {
+        background: #ffffff;
+        border: 1px solid rgba(0, 0, 0, 0.06);
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.04);
+    }
+    .section-card {
+        background-color: #f8fafc;
+        border: 1px solid #e2e8f0;
+        transition: all 0.2s ease;
+    }
+    .auth-field input[type="text"],
+    .auth-field input[type="email"],
+    .auth-field input[type="tel"],
+    .auth-field textarea,
+    .auth-field select {
+        width: 100%;
+        padding: 0.65rem 0.9rem;
+        font-size: 0.9rem;
+        border: 1.5px solid #cbd5e1;
+        border-radius: 0.6rem;
+        background-color: #ffffff;
+        color: #1e293b;
+        transition: all 0.2s ease-in-out;
+    }
+    .auth-field input:focus,
+    .auth-field textarea:focus,
+    .auth-field select:focus {
+        border-color: #3b82f6;
+        box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.12);
+        outline: none;
+    }
+    /* کادر آپلود آواتار مدرن */
+    .avatar-upload-box {
+        border: 2px dashed #cbd5e1;
+        border-radius: 1rem;
+        padding: 1.5rem;
+        text-align: center;
+        background: #ffffff;
+        cursor: pointer;
+        transition: all 0.25s ease;
+        position: relative;
+    }
+    .avatar-upload-box:hover {
+        border-color: #3b82f6;
+        background: #f0f7ff;
+    }
+    .avatar-preview-img {
+        width: 85px;
+        height: 85px;
+        object-fit: cover;
+        border: 3px solid #ffffff;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+</style>
 
-        <div class="auth-card-top text-center mb-4">
-            <div class="auth-mark mb-2" style="font-size: 2.5rem;">👨‍⚕️</div>
-            <span class="auth-eyebrow text-primary fw-bold">پنل مدیریت پزشک</span>
-            <h1 class="h3 fw-bold mt-1">ویرایش پروفایل و اطلاعات حساب</h1>
-            <p class="text-muted small">تصویر، شماره نظام پزشکی و مشخصات فردی خود را مدیریت کنید.</p>
+<section class="container py-4">
+    <div class="profile-card rounded-4 p-4 p-md-5 w-100 mx-auto" style="max-width: 800px;">
+
+        <!-- هدر کارت -->
+        <div class="text-center mb-4">
+            <div class="d-inline-flex p-3 rounded-circle bg-primary bg-opacity-10 text-primary mb-3">
+                <i class="bi bi-person-badge fs-2"></i>
+            </div>
+            <span class="d-block text-primary fw-bold small text-uppercase mb-1">پنل مدیریت پزشک</span>
+            <h1 class="h4 fw-bold text-dark mb-2">ویرایش پروفایل و اطلاعات حساب</h1>
+            <p class="text-muted small mb-0">اطلاعات هویتی، آواتار و شماره نظام پزشکی خود را مدیریت کنید.</p>
         </div>
 
-        <form action="{% url 'accounts:profile' %}" method="post" enctype="multipart/form-data" class="auth-form">
+        <form action="{% url 'accounts:profile' %}" method="post" enctype="multipart/form-data">
             {% csrf_token %}
 
             {% if form.non_field_errors or user_form.non_field_errors %}
-                <div class="alert alert-danger py-2 small" role="alert">
-                    {% for error in form.non_field_errors %}<div>{{ error }}</div>{% endfor %}
-                    {% for error in user_form.non_field_errors %}<div>{{ error }}</div>{% endfor %}
+                <div class="alert alert-danger rounded-3 py-2 small shadow-sm mb-4" role="alert">
+                    {% for error in form.non_field_errors %}<div><i class="bi bi-exclamation-circle me-1"></i> {{ error }}</div>{% endfor %}
+                    {% for error in user_form.non_field_errors %}<div><i class="bi bi-exclamation-circle me-1"></i> {{ error }}</div>{% endfor %}
                 </div>
             {% endif %}
 
-            <!-- بخش اطلاعات کاربری (User) -->
-            <div class="p-3 mb-4 bg-light rounded-3 border">
-                <h5 class="fw-bold text-dark mb-3" style="font-size: 1rem;">📋 اطلاعات حساب کاربری</h5>
+            <!-- بخش ۱: تصویر پروفایل (آواتار تعاملی با پیش‌نمایش زنده) -->
+            <div class="section-card rounded-4 p-4 mb-4">
+                <div class="d-flex align-items-center mb-3">
+                    <i class="bi bi-image text-primary me-2 fs-5"></i>
+                    <h5 class="fw-bold text-dark mb-0 fs-6">تصویر پرسنلی و نمایه</h5>
+                </div>
+
+                <div class="avatar-upload-box d-flex flex-column flex-sm-row align-items-center gap-3" onclick="document.getElementById('id_avatar').click();">
+                    {% if user.profile.avatar %}
+                        <img id="avatar-preview" src="{{ user.profile.avatar.url }}" alt="آواتار" class="rounded-circle avatar-preview-img">
+                    {% else %}
+                        <div id="avatar-placeholder" class="rounded-circle avatar-preview-img bg-light text-secondary d-flex align-items-center justify-content-center border">
+                            <i class="bi bi-person display-6"></i>
+                        </div>
+                    {% endif %}
+
+                    <div class="text-sm-start text-center flex-grow-1">
+                        <span class="fw-bold text-dark d-block mb-1">برای تغییر تصویر، کلیک کنید</span>
+                        <span class="text-muted small d-block mb-2">فرمت‌های مجاز: JPG, PNG (حداکثر ۲ مگابایت)</span>
+                        <span class="btn btn-sm btn-outline-primary rounded-pill px-3">
+                            <i class="bi bi-upload me-1"></i> انتخاب فایل جدید
+                        </span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- بخش ۲: اطلاعات کاربری پایه -->
+            <div class="section-card rounded-4 p-4 mb-4">
+                <div class="d-flex align-items-center mb-3">
+                    <i class="bi bi-person-lines-fill text-primary me-2 fs-5"></i>
+                    <h5 class="fw-bold text-dark mb-0 fs-6">اطلاعات کاربری</h5>
+                </div>
+
                 <div class="row g-3">
                     {% for field in user_form.visible_fields %}
                         <div class="col-md-6 auth-field">
-                            <label for="{{ field.id_for_label }}" class="form-label fw-semibold small">
+                            <label for="{{ field.id_for_label }}" class="form-label fw-semibold text-secondary small mb-1">
                                 {{ field.label }}
                                 {% if field.field.required %}<span class="text-danger">*</span>{% endif %}
                             </label>
                             {{ field }}
-                            {% if field.help_text %}<div class="form-text text-muted" style="font-size: 0.75rem;">{{ field.help_text }}</div>{% endif %}
-                            {% for error in field.errors %}<div class="text-danger small mt-1">{{ error }}</div>{% endfor %}
+                            {% if field.help_text %}
+                                <div class="form-text text-muted" style="font-size: 0.75rem;">{{ field.help_text }}</div>
+                            {% endif %}
+                            {% for error in field.errors %}
+                                <div class="text-danger small mt-1"><i class="bi bi-x-circle me-1"></i>{{ error }}</div>
+                            {% endfor %}
                         </div>
                     {% endfor %}
                 </div>
             </div>
 
-            <!-- بخش مشخصات پروفایل (Profile) -->
-            <div class="p-3 mb-4 bg-light rounded-3 border">
-                <h5 class="fw-bold text-dark mb-3" style="font-size: 1rem;">🩺 اطلاعات تخصصی و آواتار</h5>
-
-                {% if user.profile.avatar %}
-                    <div class="d-flex align-items-center gap-3 mb-3 p-2 bg-white rounded border">
-                        <img src="{{ user.profile.avatar.url }}" alt="تصویر فعلی" class="rounded-circle shadow-sm" style="width: 60px; height: 60px; object-fit: cover;">
-                        <div>
-                            <span class="d-block small fw-bold text-dark">تصویر فعلی شما</span>
-                            <span class="text-muted" style="font-size: 0.8rem;">برای تغییر، تصویر جدیدی انتخاب کنید.</span>
-                        </div>
-                    </div>
-                {% endif %}
+            <!-- بخش ۳: اطلاعات تخصصی پزشک -->
+            <div class="section-card rounded-4 p-4 mb-4">
+                <div class="d-flex align-items-center mb-3">
+                    <i class="bi bi-clipboard2-pulse text-primary me-2 fs-5"></i>
+                    <h5 class="fw-bold text-dark mb-0 fs-6">اطلاعات تخصصی پزشک</h5>
+                </div>
 
                 <div class="row g-3">
                     {% for field in form.visible_fields %}
-                        <div class="col-12 auth-field">
-                            <label for="{{ field.id_for_label }}" class="form-label fw-semibold small">
-                                {{ field.label }}
-                                {% if field.field.required %}<span class="text-danger">*</span>{% endif %}
-                            </label>
-                            {{ field }}
-                            {% if field.help_text %}<div class="form-text text-muted" style="font-size: 0.75rem;">{{ field.help_text }}</div>{% endif %}
-                            {% for error in field.errors %}<div class="text-danger small mt-1">{{ error }}</div>{% endfor %}
-                        </div>
+                        {# فیلد آواتار را پنهان می‌کنیم چون ویجت دلخواه اختصاصی برای آن در بخش ۱ ساختیم #}
+                        {% if field.name == 'avatar' %}
+                            <div style="display: none;">{{ field }}</div>
+                        {% else %}
+                            <div class="col-md-6 auth-field">
+                                <label for="{{ field.id_for_label }}" class="form-label fw-semibold text-secondary small mb-1">
+                                    {{ field.label }}
+                                    {% if field.field.required %}<span class="text-danger">*</span>{% endif %}
+                                </label>
+                                {{ field }}
+                                {% if field.help_text %}
+                                    <div class="form-text text-muted" style="font-size: 0.75rem;">{{ field.help_text }}</div>
+                                {% endif %}
+                                {% for error in field.errors %}
+                                    <div class="text-danger small mt-1"><i class="bi bi-x-circle me-1"></i>{{ error }}</div>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
                     {% endfor %}
                 </div>
             </div>
 
-            <div class="d-grid gap-2">
-                <button class="btn btn-primary btn-lg shadow-sm fw-bold" type="submit">ذخیره تغییرات پروفایل</button>
-                <a href="{% url 'patients:list' %}" class="btn btn-outline-secondary btn-sm">بازگشت به لیست بیماران</a>
+            <!-- بخش ۴: کادر امنیت و رمز عبور -->
+            <div class="p-3 mb-4 rounded-3 border bg-white d-flex flex-column flex-sm-row justify-content-between align-items-sm-center gap-3">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="p-2 bg-light rounded text-secondary">
+                        <i class="bi bi-shield-lock-fill fs-4 text-warning"></i>
+                    </div>
+                    <div>
+                        <h6 class="mb-0 fw-bold text-dark">امنیت و رمز عبور</h6>
+                        <small class="text-muted">توصیه می‌شود رمز عبور خود را به صورت دوره‌ای بروزرسانی کنید.</small>
+                    </div>
+                </div>
+                <div>
+                    <a href="{% url 'accounts:change_password' %}" class="btn btn-outline-secondary btn-sm px-3 text-nowrap rounded-pill">
+                        <i class="bi bi-key me-1"></i> تغییر رمز عبور
+                    </a>
+                </div>
+            </div>
+
+            <!-- دکمه‌های اقدام نهایی -->
+            <div class="d-flex flex-column-reverse flex-sm-row justify-content-end gap-2 pt-2">
+                <a href="{% url 'patients:list' %}" class="btn btn-light border text-secondary px-4">
+                    انصراف
+                </a>
+                <button class="btn btn-primary px-4 shadow-sm fw-bold" type="submit">
+                    <i class="bi bi-check2-circle me-1"></i> ذخیره تغییرات
+                </button>
             </div>
         </form>
     </div>
 </section>
+
+<!-- اسکریپت ساده برای پیش‌نمایش زنده عکس انتخابی -->
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        const avatarInput = document.getElementById("id_avatar");
+        const avatarPreview = document.getElementById("avatar-preview");
+
+        if (avatarInput) {
+            avatarInput.addEventListener("change", function() {
+                const file = this.files[0];
+                if (file && avatarPreview) {
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        avatarPreview.src = e.target.result;
+                    };
+                    reader.readAsDataURL(file);
+                }
+            });
+        }
+    });
+</script>
 {% endblock %}

@@ -1,8 +1,9 @@
-from django.contrib.auth.views import LoginView, LogoutView
+from django.contrib.auth.views import LoginView, LogoutView, PasswordChangeView
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.urls import reverse_lazy
 from django.views.generic import CreateView, UpdateView
 from django.contrib import messages
+from django.contrib.messages.views import SuccessMessageMixin
 from django.contrib.auth import login
 from .forms import ProfileUpdateForm, UserUpdateForm
 from .models import Profile
@@ -74,3 +75,8 @@ class ProfileUpdateView(LoginRequiredMixin, UpdateView):
         profile_form.save()
         user_form.save()
         return super().form_valid(profile_form)
+
+class ChangePasswordView(LoginRequiredMixin,SuccessMessageMixin,PasswordChangeView):
+    template_name = 'accounts/change_password.html'
+    success_url = reverse_lazy('accounts:profile')
+    success_message = 'رمز عبور شما با موفقیت تغییر یافت'
