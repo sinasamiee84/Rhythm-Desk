@@ -48,9 +48,11 @@ cardioflow/
 
 ### 🏠 Dashboard & Profile
 
-|                  Admin Home                   | User Profile |
-|:---------------------------------------------:|:---:|
-|     ![home admin](assets/home_admin.png)      | ![profile](assets/profile.png) |
+|              Admin Home              | User Profile |
+|:------------------------------------:|:---:|
+| ![home admin](assets/home_admin.png) | ![profile](assets/profile.png) |
+|              Dashboard               |
+|  ![dashboard](assets/dashboard.png)  |
                
 
 ### 👤 Patient Management

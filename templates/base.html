@@ -75,31 +75,30 @@
         .profile-name { line-height: 1.2; }
         .profile-name small { display: block; font-size: .72rem; opacity: .85; }
         /* استایل استاندارد Bootstrap برای اینپوت‌های فرم‌های پیش‌فرض جنگو */
-.card form input[type="text"],
-.card form input[type="password"],
-.card form input[type="email"],
-.card form input[type="number"],
-.card form select,
-.card form textarea {
-    display: block;
-    width: 100%;
-    padding: 0.55rem 0.75rem;
-    font-size: 0.95rem;
-    line-height: 1.5;
-    color: #212529;
-    background-color: #fff;
-    border: 1px solid #ced4da;
-    border-radius: 8px;
-    transition: border-color .15s ease-in-out, box-shadow .15s ease-in-out;
-}
-.card form input:focus,
-.card form select:focus,
-.card form textarea:focus {
-    border-color: #86b7fe;
-    outline: 0;
-    box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
-}
-
+        .card form input[type="text"],
+        .card form input[type="password"],
+        .card form input[type="email"],
+        .card form input[type="number"],
+        .card form select,
+        .card form textarea {
+            display: block;
+            width: 100%;
+            padding: 0.55rem 0.75rem;
+            font-size: 0.95rem;
+            line-height: 1.5;
+            color: #212529;
+            background-color: #fff;
+            border: 1px solid #ced4da;
+            border-radius: 8px;
+            transition: border-color .15s ease-in-out, box-shadow .15s ease-in-out;
+        }
+        .card form input:focus,
+        .card form select:focus,
+        .card form textarea:focus {
+            border-color: #86b7fe;
+            outline: 0;
+            box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+        }
     </style>
     {% block extra_css %}{% endblock %}
 </head>
@@ -108,7 +107,8 @@
     <!-- Navbar -->
     <nav class="navbar navbar-expand-lg navbar-dark py-3">
         <div class="container">
-            <a class="navbar-brand fw-bold fs-4 d-flex align-items-center gap-2" href="{% url 'patients:list' %}">
+            <!-- لوگو: در صورت لاگین به داشبورد و در غیر این صورت به ورود هدایت می‌کند -->
+            <a class="navbar-brand fw-bold fs-4 d-flex align-items-center gap-2" href="{% if user.is_authenticated %}{% url 'dashboard:dashboard' %}{% else %}{% url 'accounts:login' %}{% endif %}">
                 <i class="bi bi-heart-pulse-fill text-danger fs-3"></i> کاردیوفلو <span class="badge bg-light text-primary fs-6">ECG AI</span>
             </a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
@@ -118,16 +118,25 @@
                 <ul class="navbar-nav me-auto mb-2 mb-lg-0">
                     {% if user.is_authenticated %}
                         <li class="nav-item">
-                            <a class="nav-link active" href="{% url 'patients:list' %}"><i class="bi bi-people-fill"></i> لیست بیماران</a>
+                            <a class="nav-link {% if request.resolver_match.app_name == 'dashboard' %}active fw-bold{% endif %}" href="{% url 'dashboard:dashboard' %}">
+                                <i class="bi bi-speedometer2"></i> داشبورد
+                            </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" href="{% url 'patients:create' %}"><i class="bi bi-person-plus-fill"></i> ثبت بیمار جدید</a>
+                            <a class="nav-link {% if request.resolver_match.url_name == 'list' %}active fw-bold{% endif %}" href="{% url 'patients:list' %}">
+                                <i class="bi bi-people-fill"></i> لیست بیماران
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {% if request.resolver_match.url_name == 'create' %}active fw-bold{% endif %}" href="{% url 'patients:create' %}">
+                                <i class="bi bi-person-plus-fill"></i> ثبت بیمار جدید
+                            </a>
                         </li>
                     {% endif %}
                 </ul>
                 <ul class="navbar-nav ms-auto align-items-center">
                     {% if user.is_authenticated %}
-                        <!-- عکس پروفایل + نام دکتر + ویرایش پروفایل (همه کلیک‌شدنی) -->
+                        <!-- عکس پروفایل + نام دکتر + ویرایش پروفایل -->
                         <li class="nav-item me-3">
                             <a class="profile-link" href="{% url 'accounts:profile' %}">
                                 {% if user.profile.avatar %}

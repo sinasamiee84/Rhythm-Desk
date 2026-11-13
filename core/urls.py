@@ -31,6 +31,7 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('accounts/', include('apps.accounts.urls', namespace='accounts')),
     path('patients/', include('apps.patients.urls', namespace='patients')),
+    path('dashboard/', include('apps.dashboard.urls', namespace='dashboard')),
     path('', home_view, name='home'),
 ]
 if settings.DEBUG:
