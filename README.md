@@ -44,12 +44,14 @@ cardioflow/
 | Login Page | Register Page |
 |:---:|:---:|
 | ![login](assets/login.png) | ![register](assets/register.png) |
+| ![password change](assets/changepassword.png) |
 
 ### 🏠 Dashboard & Profile
 
-| Admin Home | User Profile |
-|:---:|:---:|
-| ![home admin](assets/home_admin.png) | ![profile](assets/profile.png) |
+|                  Admin Home                   | User Profile |
+|:---------------------------------------------:|:---:|
+|     ![home admin](assets/home_admin.png)      | ![profile](assets/profile.png) |
+               
 
 ### 👤 Patient Management
 
