@@ -44,6 +44,7 @@ cardioflow/
 | Login Page | Register Page |
 |:---:|:---:|
 | ![login](assets/login.png) | ![register](assets/register.png) |
+|           Password Change            |
 | ![password change](assets/changepassword.png) |
 
 ### 🏠 Dashboard & Profile
