@@ -11,6 +11,7 @@ from unfold.forms import UserCreationForm  # فرم ثبت‌نام سازگار
 
 from apps.accounts.models import User, Profile
 from .forms import ProfileUpdateForm
+from .forms import CustomUserCreationForm
 
 class CustomLoginView(LoginView):
     template_name = 'accounts/login.html'
@@ -26,9 +27,10 @@ class CustomLogoutView(LogoutView):
     next_page = reverse_lazy('accounts:login')
 
 
+
 class CustomRegisterView(CreateView):
     model = User
-    form_class = UserCreationForm
+    form_class = CustomUserCreationForm # از فرم جدید خودتان استفاده کنید
     template_name = 'accounts/register.html'
     success_url = reverse_lazy('patients:list')
 

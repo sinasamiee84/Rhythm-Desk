@@ -3,8 +3,15 @@ from django.contrib.auth import get_user_model
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Submit, Layout, Row, Column, HTML
 from .models import Profile
+from django.contrib.auth.forms import UserCreationForm as DjangoUserCreationForm
 
 User = get_user_model()
+
+class CustomUserCreationForm(DjangoUserCreationForm):
+    class Meta(DjangoUserCreationForm.Meta):
+        model = User
+        fields = ("username", "phone_number")
+
 
 class UserUpdateForm(forms.ModelForm):
     class Meta:
